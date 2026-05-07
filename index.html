@@ -18,7 +18,6 @@
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
     table { border-collapse: collapse; width: 100%; }
     
-    /* เพิ่มสไตล์สำหรับ Scrollbar ในกล่อง Modal ให้ดูสวยงาม */
     .modal-scroll::-webkit-scrollbar { width: 6px; }
     .modal-scroll::-webkit-scrollbar-track { background: #1e293b; border-radius: 8px; }
     .modal-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; }
@@ -30,10 +29,16 @@
 const { useState, useEffect } = React;
 const { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
 
-const PERIODS = [
+const FORM_PERIODS = [
   "มกราคม 2569", "กุมภาพันธ์ 2569", "มีนาคม 2569", "เมษายน 2569",
   "พฤษภาคม 2569", "มิถุนายน 2569", "กรกฎาคม 2569", "สิงหาคม 2569",
   "กันยายน 2569", "ตุลาคม 2569", "พฤศจิกายน 2569", "ธันวาคม 2569"
+];
+
+const DISPLAY_PERIODS = [
+  "🌟 ภาพรวม: ต้องตามต่อ (Active)",
+  "📊 ภาพรวม: ทั้งหมด (All Time)",
+  ...FORM_PERIODS
 ];
 
 const TYPES = [
@@ -46,7 +51,6 @@ const TYPES = [
   "Others"
 ];
 
-// จัดกลุ่ม Package ตามประเภทคลินิก
 const PACKAGE_MAP = {
   "Aesthetic (ความงาม)": ["ไม่ระบุ", "Grow", "Aesthetics", "Medical Aesthetics"],
   "General Clinic (คลินิกทั่วไป)": ["ไม่ระบุ", "GP", "GP +"],
@@ -63,6 +67,7 @@ const INITIAL_DATA = [
   { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "GP", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569" },
   { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569" },
   { id: 5, name: "คลินิก C", type: "Aesthetic (ความงาม)", package: "Grow", stage: "Follow Up", value: 36000, prob: 40, priority: "กลาง", month: "พฤษภาคม 2569" },
+  { id: 6, name: "คลินิก D (ลีดเก่า)", type: "Dental (ทำฟัน)", package: "Dental", stage: "นัด Demo", value: 25000, prob: 50, priority: "กลาง", month: "เมษายน 2569" }
 ];
 
 const STAGES = ["Prospect","Interested","Follow Up","นัด Demo","Demo แล้ว","รอเซ็นสัญญา","ปิดดีลแล้ว","ไม่สนใจ"];
@@ -135,7 +140,7 @@ function Modal({ onAdd, onClose, currentPeriod }) {
         )
       ),
       ...[
-        { label:"ประจำเดือน", key:"month", opts: PERIODS },
+        { label:"ประจำเดือน", key:"month", opts: FORM_PERIODS },
         { label:"ประเภทคลินิก", key:"type", opts:TYPES },
         { label:"แพ็กเกจโปรแกรมที่สนใจ", key:"package", opts: PACKAGE_MAP[form.type] || ["ไม่ระบุ"] },
         { label:"Stage ปัจจุบัน", key:"stage", opts:STAGES },
@@ -198,7 +203,12 @@ function App() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const activeData = data.filter(d => d.month === selectedPeriod);
+  // กรองข้อมูลตามมุมมองที่เลือกใน Dropdown
+  const activeData = selectedPeriod === "🌟 ภาพรวม: ต้องตามต่อ (Active)" 
+    ? data.filter(d => d.stage !== "ปิดดีลแล้ว" && d.stage !== "ไม่สนใจ")
+    : selectedPeriod === "📊 ภาพรวม: ทั้งหมด (All Time)"
+    ? data
+    : data.filter(d => d.month === selectedPeriod);
 
   const filtered = activeData.filter(d =>
     (filterType === "ทั้งหมด" || d.type === filterType) &&
@@ -217,9 +227,12 @@ function App() {
   const deleteClinic = (id) => { if(confirm("ลบคลินิกนี้ออกจากระบบ?")) setData(p => p.filter(d=>d.id!==id)); };
 
   const selectStyle = { background:"#1e293b", border:"1px solid #334155", borderRadius:8, padding:"6px 10px", color:"#94a3b8", fontSize:12, outline:"none" };
+  
+  // ตั้งค่าเดือนเริ่มต้นตอนกดเพิ่มคลินิก ถ้าอยู่หน้าภาพรวมให้ใช้พฤษภาคมเป็นค่าตั้งต้น
+  const defaultModalMonth = FORM_PERIODS.includes(selectedPeriod) ? selectedPeriod : "พฤษภาคม 2569";
 
   return React.createElement("div", { style:{ background:"#020617", minHeight:"100vh", padding:"24px 28px" }},
-    showModal && React.createElement(Modal, { onAdd:addClinic, onClose:()=>setShowModal(false), currentPeriod:selectedPeriod }),
+    showModal && React.createElement(Modal, { onAdd:addClinic, onClose:()=>setShowModal(false), currentPeriod: defaultModalMonth }),
 
     // Header
     React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }},
@@ -234,10 +247,10 @@ function App() {
             onChange: e => setSelectedPeriod(e.target.value), 
             style: { marginLeft: 15, background:"#1e293b", border:"1px solid #6366f1", borderRadius:8, padding:"6px 12px", color:"#f8fafc", fontSize:16, outline:"none", cursor:"pointer", fontWeight:700 }
           },
-            ...PERIODS.map(p => React.createElement("option", { key:p }, p))
+            ...DISPLAY_PERIODS.map(p => React.createElement("option", { key:p }, p))
           )
         ),
-        React.createElement("div", { style:{ color:"#475569", fontSize:13, marginLeft:18 }}, "ข้อมูลบันทึกในเครื่อง (สลับเดือนเพื่อดูข้อมูลแยกกันได้)")
+        React.createElement("div", { style:{ color:"#475569", fontSize:13, marginLeft:18 }}, "ข้อมูลบันทึกในเครื่อง (สลับดูภาพรวม หรือดูแยกตามเดือนได้)")
       ),
       React.createElement("div", { style:{ display:"flex", gap:10 }},
         React.createElement("button", { onClick:save, style:{ background: saved ? "#10b981" : "#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 18px", color:"#f8fafc", fontWeight:700, fontSize:14, cursor:"pointer" }},
@@ -333,57 +346,4 @@ function App() {
       React.createElement("div", { style:{ overflowX:"auto" }},
         React.createElement("table", null,
           React.createElement("thead", null,
-            React.createElement("tr", { style:{ borderBottom:"1px solid #1e293b" }},
-              ...["ชื่อคลินิก","ประเภท","แพ็กเกจ","Stage","มูลค่า (บาท/ปี)","โอกาส %","Priority","อัปเดต Stage",""].map(h =>
-                React.createElement("th", { key:h, style:{ padding:"8px 12px", textAlign:"left", color:"#475569", fontWeight:600, fontSize:11 }}, h)
-              )
-            )
-          ),
-          React.createElement("tbody", null,
-            ...filtered.map((d,i) => {
-              const pri = PRIORITY_BADGE[d.priority] || PRIORITY_BADGE["กลาง"];
-              return React.createElement("tr", { key:d.id, style:{ borderBottom:"1px solid #0f172a", background: i%2===0 ? "#0a1628":"transparent" }},
-                React.createElement("td", { style:{ padding:"10px 12px", color:"#e2e8f0", fontWeight:600 }}, d.name),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("span", { style:{ background:`${TYPE_COLORS[d.type]}22`, color:TYPE_COLORS[d.type], padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.type)
-                ),
-                React.createElement("td", { style:{ padding:"10px 12px", color:"#94a3b8", fontSize: 11 }}, d.package || "ไม่ระบุ"),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("span", { style:{ background:`${STAGE_COLORS[d.stage]}22`, color:STAGE_COLORS[d.stage], padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.stage)
-                ),
-                React.createElement("td", { style:{ padding:"10px 12px", color:"#94a3b8" }}, d.value ? `฿${d.value.toLocaleString()}` : "-"),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:8 }},
-                    React.createElement("div", { style:{ width:50, height:6, background:"#1e293b", borderRadius:3, overflow:"hidden" }},
-                      React.createElement("div", { style:{ width:`${d.prob}%`, height:"100%", background: d.prob>=70?"#10b981":d.prob>=40?"#f59e0b":"#6366f1", borderRadius:3 }})
-                    ),
-                    React.createElement("span", { style:{ color:"#94a3b8", fontSize:11 }}, `${d.prob}%`)
-                  )
-                ),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("span", { style:{ background:pri.bg, color:pri.text, padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.priority)
-                ),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("select", { value:d.stage, onChange:e=>updateStage(d.id,e.target.value), style:{ background:"#1e293b", border:"1px solid #334155", borderRadius:6, padding:"4px 8px", color:"#94a3b8", fontSize:11, outline:"none", cursor:"pointer" }},
-                    ...STAGES.map(s => React.createElement("option", { key:s }, s))
-                  )
-                ),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("button", { onClick:()=>deleteClinic(d.id), style:{ background:"none", border:"none", color:"#ef4444", cursor:"pointer", fontSize:14 }}, "🗑️")
-                )
-              );
-            }),
-            filtered.length===0 && React.createElement("tr", null,
-              React.createElement("td", { colSpan:9, style:{ textAlign:"center", padding:32, color:"#475569" }}, "ไม่พบข้อมูลของเดือนนี้")
-            )
-          )
-        )
-      )
-    )
-  );
-}
-
-ReactDOM.render(React.createElement(App), document.getElementById("root"));
-</script>
-</body>
-</html>
+            React.createElement("tr", { style:{ borderBottom:"1px solid
