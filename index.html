@@ -110,8 +110,9 @@ function KPICard({ label, value, sub, color, icon }) {
   );
 }
 
-function Modal({ onAdd, onClose, currentPeriod }) {
-  const [form, setForm] = useState({ name:"", type:"Aesthetic (ความงาม)", package:"ไม่ระบุ", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod });
+function Modal({ initialData, onSave, onClose, currentPeriod }) {
+  // รับข้อมูล initialData มา ถ้ามีแปลว่ากำลัง "แก้ไข" ถ้าไม่มีแปลว่า "เพิ่มใหม่"
+  const [form, setForm] = useState(initialData || { name:"", type:"Aesthetic (ความงาม)", package:"ไม่ระบุ", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod });
   
   const handleChange = (k, v) => {
     setForm(f => {
@@ -122,11 +123,12 @@ function Modal({ onAdd, onClose, currentPeriod }) {
   };
 
   const inputStyle = { background:"#1e293b", border:"1px solid #334155", borderRadius:8, padding:"8px 12px", color:"#f8fafc", fontSize:14, outline:"none", width:"100%" };
+  const isEditing = !!initialData;
 
   return React.createElement("div", { style:{ position:"fixed", inset:0, background:"#000000cc", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding: "20px" }},
     React.createElement("div", { className: "modal-scroll", style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:20, padding:32, width:440, maxHeight: "90vh", overflowY: "auto", display:"flex", flexDirection:"column", gap:14 }},
       React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"center" }},
-        React.createElement("div", { style:{ color:"#f8fafc", fontWeight:700, fontSize:18, fontFamily:"'Space Grotesk',sans-serif" }}, "➕ เพิ่มคลินิกใหม่"),
+        React.createElement("div", { style:{ color:"#f8fafc", fontWeight:700, fontSize:18, fontFamily:"'Space Grotesk',sans-serif" }}, isEditing ? "✏️ แก้ไขข้อมูลคลินิก" : "➕ เพิ่มคลินิกใหม่"),
         React.createElement("button", { onClick:onClose, style:{ background:"none", border:"none", color:"#64748b", fontSize:20, cursor:"pointer" }}, "✕")
       ),
       ...[
@@ -154,9 +156,9 @@ function Modal({ onAdd, onClose, currentPeriod }) {
         )
       ),
       React.createElement("button", {
-        onClick:() => { onAdd({...form, id:Date.now(), value:Number(form.value)||0, prob:Number(form.prob)||0}); onClose(); },
+        onClick:() => { onSave({...form, id: form.id || Date.now(), value:Number(form.value)||0, prob:Number(form.prob)||0}); },
         style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:10, padding:12, color:"#fff", fontWeight:700, fontSize:15, cursor:"pointer", marginTop:4, flexShrink: 0 }
-      }, "บันทึกข้อมูล")
+      }, isEditing ? "อัปเดตข้อมูล" : "บันทึกข้อมูล")
     )
   );
 }
@@ -193,6 +195,7 @@ function App() {
   
   const [selectedPeriod, setSelectedPeriod] = useState("พฤษภาคม 2569");
   const [showModal, setShowModal] = useState(false);
+  const [editingData, setEditingData] = useState(null); // เก็บข้อมูลคลินิกที่กำลังจะแก้
   const [filterType, setFilterType] = useState("ทั้งหมด");
   const [filterStage, setFilterStage] = useState("ทั้งหมด");
   const [saved, setSaved] = useState(false);
@@ -203,7 +206,6 @@ function App() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  // กรองข้อมูลตามมุมมองที่เลือกใน Dropdown
   const activeData = selectedPeriod === "🌟 ภาพรวม: ต้องตามต่อ (Active)" 
     ? data.filter(d => d.stage !== "ปิดดีลแล้ว" && d.stage !== "ไม่สนใจ")
     : selectedPeriod === "📊 ภาพรวม: ทั้งหมด (All Time)"
@@ -222,17 +224,30 @@ function App() {
   const typeData = TYPES.map(t => ({ name:t, value:activeData.filter(d=>d.type===t).length })).filter(d=>d.value>0);
   const stageData = STAGES.map(s => ({ name:s, value:activeData.filter(d=>d.stage===s).length, fill:STAGE_COLORS[s] }));
 
-  const addClinic = (c) => setData(p => [...p, c]);
+  // รวมฟังก์ชันเพิ่มและแก้ไขไว้ด้วยกัน
+  const handleSaveClinic = (clinicData) => {
+    if (editingData) {
+      // โหมดแก้ไข
+      setData(p => p.map(d => d.id === clinicData.id ? clinicData : d));
+    } else {
+      // โหมดเพิ่มใหม่
+      setData(p => [...p, clinicData]);
+    }
+    setShowModal(false);
+    setEditingData(null);
+  };
+
   const updateStage = (id, stage) => setData(p => p.map(d => d.id===id ? {...d,stage} : d));
   const deleteClinic = (id) => { if(confirm("ลบคลินิกนี้ออกจากระบบ?")) setData(p => p.filter(d=>d.id!==id)); };
 
+  const openAddModal = () => { setEditingData(null); setShowModal(true); };
+  const openEditModal = (clinic) => { setEditingData(clinic); setShowModal(true); };
+
   const selectStyle = { background:"#1e293b", border:"1px solid #334155", borderRadius:8, padding:"6px 10px", color:"#94a3b8", fontSize:12, outline:"none" };
-  
-  // ตั้งค่าเดือนเริ่มต้นตอนกดเพิ่มคลินิก ถ้าอยู่หน้าภาพรวมให้ใช้พฤษภาคมเป็นค่าตั้งต้น
   const defaultModalMonth = FORM_PERIODS.includes(selectedPeriod) ? selectedPeriod : "พฤษภาคม 2569";
 
   return React.createElement("div", { style:{ background:"#020617", minHeight:"100vh", padding:"24px 28px" }},
-    showModal && React.createElement(Modal, { onAdd:addClinic, onClose:()=>setShowModal(false), currentPeriod: defaultModalMonth }),
+    showModal && React.createElement(Modal, { initialData: editingData, onSave: handleSaveClinic, onClose:()=> { setShowModal(false); setEditingData(null); }, currentPeriod: defaultModalMonth }),
 
     // Header
     React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }},
@@ -256,7 +271,7 @@ function App() {
         React.createElement("button", { onClick:save, style:{ background: saved ? "#10b981" : "#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 18px", color:"#f8fafc", fontWeight:700, fontSize:14, cursor:"pointer" }},
           saved ? "✅ บันทึกแล้ว" : "💾 บันทึก"
         ),
-        React.createElement("button", { onClick:()=>setShowModal(true), style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:12, padding:"10px 20px", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer", boxShadow:"0 4px 20px #6366f144" }},
+        React.createElement("button", { onClick:openAddModal, style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:12, padding:"10px 20px", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer", boxShadow:"0 4px 20px #6366f144" }},
           "➕ เพิ่มคลินิก"
         )
       )
@@ -347,7 +362,7 @@ function App() {
         React.createElement("table", null,
           React.createElement("thead", null,
             React.createElement("tr", { style:{ borderBottom:"1px solid #1e293b" }},
-              ...["ชื่อคลินิก","เดือน","ประเภท","แพ็กเกจ","Stage","มูลค่า (บาท/ปี)","โอกาส %","Priority","อัปเดต Stage",""].map(h =>
+              ...["ชื่อคลินิก","เดือน","ประเภท","แพ็กเกจ","Stage","มูลค่า (บาท/ปี)","โอกาส %","Priority","อัปเดต Stage","จัดการ"].map(h =>
                 React.createElement("th", { key:h, style:{ padding:"8px 12px", textAlign:"left", color:"#475569", fontWeight:600, fontSize:11 }}, h)
               )
             )
@@ -382,7 +397,8 @@ function App() {
                     ...STAGES.map(s => React.createElement("option", { key:s }, s))
                   )
                 ),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
+                React.createElement("td", { style:{ padding:"10px 12px", display:"flex", gap: 10, alignItems: "center", height: "100%" }},
+                  React.createElement("button", { onClick:()=>openEditModal(d), style:{ background:"none", border:"none", cursor:"pointer", fontSize:14 }}, "✏️"),
                   React.createElement("button", { onClick:()=>deleteClinic(d.id), style:{ background:"none", border:"none", color:"#ef4444", cursor:"pointer", fontSize:14 }}, "🗑️")
                 )
               );
