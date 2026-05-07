@@ -12,7 +12,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #020617; color: #f8fafc; font-family: 'Sarabun', sans-serif; }
-    select, input, button { font-family: 'Sarabun', sans-serif; }
+    select, input, button, textarea { font-family: 'Sarabun', sans-serif; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
@@ -26,7 +26,7 @@
 <body>
 <div id="root"></div>
 <script>
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 const { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
 
 const FORM_PERIODS = [
@@ -71,11 +71,10 @@ const STAGE_COLORS = {
 };
 
 const INITIAL_DATA = [
-  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Medical Aesthetics", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569" },
-  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aesthetics", stage: "อยู่ระหว่างทดลอง Trial", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569" },
-  { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "GP", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569" },
-  { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569" },
-  { id: 5, name: "คลินิก C", type: "Aesthetic (ความงาม)", package: "Grow", stage: "ปิดดีลแล้ว", value: 36000, prob: 100, priority: "สูง", month: "พฤษภาคม 2569" }
+  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Medical Aesthetics", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569", note: "รอหมอเซ็นเอกสาร" },
+  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aesthetics", stage: "อยู่ระหว่างทดลอง Trial", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569", note: "ส่งลิงก์ทดลองใช้ให้ผู้ช่วยหมอแล้ว" },
+  { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "GP", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569", note: "" },
+  { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569", note: "ทักไปตอนโปรโมชั่น" }
 ];
 
 const TYPE_COLORS = {
@@ -111,13 +110,12 @@ function KPICard({ label, value, sub, color, icon }) {
 }
 
 function Modal({ initialData, onSave, onClose, currentPeriod }) {
-  const [form, setForm] = useState(initialData || { name:"", type:"Aesthetic (ความงาม)", package:"ไม่ระบุ", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod });
+  const [form, setForm] = useState(initialData || { name:"", type:"Aesthetic (ความงาม)", package:"ไม่ระบุ", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod, note:"" });
   
   const handleChange = (k, v) => {
     setForm(f => {
       const newForm = { ...f, [k]: v };
       if (k === 'type') newForm.package = "ไม่ระบุ";
-      // ถ้าเลือก "ปิดดีลแล้ว" ให้โอกาสปิดเป็น 100% อัตโนมัติ
       if (k === 'stage' && v === 'ปิดดีลแล้ว') newForm.prob = 100;
       return newForm;
     });
@@ -127,11 +125,12 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
   const isEditing = !!initialData;
 
   return React.createElement("div", { style:{ position:"fixed", inset:0, background:"#000000cc", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding: "20px" }},
-    React.createElement("div", { className: "modal-scroll", style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:20, padding:32, width:440, maxHeight: "90vh", overflowY: "auto", display:"flex", flexDirection:"column", gap:14 }},
+    React.createElement("div", { className: "modal-scroll", style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:20, padding:32, width:460, maxHeight: "90vh", overflowY: "auto", display:"flex", flexDirection:"column", gap:14 }},
       React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"center" }},
         React.createElement("div", { style:{ color:"#f8fafc", fontWeight:700, fontSize:18, fontFamily:"'Space Grotesk',sans-serif" }}, isEditing ? "✏️ แก้ไขข้อมูลคลินิก" : "➕ เพิ่มคลินิกใหม่"),
         React.createElement("button", { onClick:onClose, style:{ background:"none", border:"none", color:"#64748b", fontSize:20, cursor:"pointer" }}, "✕")
       ),
+      // ข้อมูลพื้นฐาน
       ...[
         { label:"ชื่อคลินิก", key:"name", type:"text" },
         { label:"มูลค่าที่เสนอ (บาท/ปี)", key:"value", type:"number" },
@@ -142,6 +141,7 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
           React.createElement("input", { type, value:form[key], onChange:e=>handleChange(key,e.target.value), style:inputStyle })
         )
       ),
+      // ข้อมูลแบบ Dropdown
       ...[
         { label:"ประจำเดือน", key:"month", opts: FORM_PERIODS },
         { label:"ประเภทคลินิก", key:"type", opts:TYPES },
@@ -156,6 +156,16 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
           )
         )
       ),
+      // โน้ต
+      React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:6 }},
+        React.createElement("label", { style:{ color:"#94a3b8", fontSize:12 }}, "หมายเหตุ / สิ่งที่ต้องทำต่อ"),
+        React.createElement("textarea", { 
+          value:form.note || "", 
+          onChange:e=>handleChange("note",e.target.value), 
+          style:{...inputStyle, height: "60px", resize: "vertical"},
+          placeholder: "เช่น ลูกค้าขอทดลองใช้ระบบ 7 วัน, หมอไปต่างประเทศ..." 
+        })
+      ),
       React.createElement("button", {
         onClick:() => { onSave({...form, id: form.id || Date.now(), value:Number(form.value)||0, prob:Number(form.prob)||0}); },
         style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:10, padding:12, color:"#fff", fontWeight:700, fontSize:15, cursor:"pointer", marginTop:4, flexShrink: 0 }
@@ -165,6 +175,7 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
 }
 
 function App() {
+  const fileInputRef = useRef(null);
   const [data, setData] = useState(() => {
     try { 
       const s = localStorage.getItem("pipeline"); 
@@ -173,7 +184,8 @@ function App() {
         return parsed.map(item => ({
           ...item,
           month: item.month || "พฤษภาคม 2569",
-          package: item.package || "ไม่ระบุ"
+          package: item.package || "ไม่ระบุ",
+          note: item.note || ""
         }));
       }
       return INITIAL_DATA; 
@@ -185,16 +197,17 @@ function App() {
   const [editingData, setEditingData] = useState(null); 
   const [filterType, setFilterType] = useState("ทั้งหมด");
   const [filterStage, setFilterStage] = useState("ทั้งหมด");
+  const [searchQuery, setSearchQuery] = useState(""); // เพิ่ม State สำหรับค้นหา
   const [saved, setSaved] = useState(false);
 
-  const save = () => {
-    localStorage.setItem("pipeline", JSON.stringify(data));
+  const save = (newData) => {
+    localStorage.setItem("pipeline", JSON.stringify(newData || data));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  // กรองข้อมูลตามมุมมอง
-  const activeData = selectedPeriod === "🌟 ภาพรวม: ต้องตามต่อ (Active)" 
+  // กรองข้อมูลเบื้องต้นตามมุมมอง
+  let activeData = selectedPeriod === "🌟 ภาพรวม: ต้องตามต่อ (Active)" 
     ? data.filter(d => d.stage !== "ปิดดีลแล้ว" && d.stage !== "ไม่สนใจ")
     : selectedPeriod === "🏆 รายการที่ปิดดีลได้ (Closed Won)"
     ? data.filter(d => d.stage === "ปิดดีลแล้ว")
@@ -202,6 +215,12 @@ function App() {
     ? data
     : data.filter(d => d.month === selectedPeriod);
 
+  // กรองต่อด้วยช่องค้นหา (Search)
+  if (searchQuery.trim() !== "") {
+    activeData = activeData.filter(d => d.name.toLowerCase().includes(searchQuery.toLowerCase()) || (d.note && d.note.toLowerCase().includes(searchQuery.toLowerCase())));
+  }
+
+  // กรองต่อด้วย Dropdown
   const filtered = activeData.filter(d =>
     (filterType === "ทั้งหมด" || d.type === filterType) &&
     (filterStage === "ทั้งหมด" || d.stage === filterStage)
@@ -220,17 +239,62 @@ function App() {
   }));
 
   const handleSaveClinic = (clinicData) => {
+    let newData;
     if (editingData) {
-      setData(p => p.map(d => d.id === clinicData.id ? clinicData : d));
+      newData = data.map(d => d.id === clinicData.id ? clinicData : d);
     } else {
-      setData(p => [...p, clinicData]);
+      newData = [...data, clinicData];
     }
+    setData(newData);
+    save(newData); // เซฟอัตโนมัติเมื่อเพิ่ม/แก้
     setShowModal(false);
     setEditingData(null);
   };
 
-  const updateStage = (id, stage) => setData(p => p.map(d => d.id===id ? {...d,stage, prob: stage === "ปิดดีลแล้ว" ? 100 : d.prob} : d));
-  const deleteClinic = (id) => { if(confirm("ลบข้อมูลคลินิกนี้?")) setData(p => p.filter(d=>d.id!==id)); };
+  const updateStage = (id, stage) => {
+    const newData = data.map(d => d.id===id ? {...d,stage, prob: stage === "ปิดดีลแล้ว" ? 100 : d.prob} : d);
+    setData(newData);
+    save(newData);
+  };
+  
+  const deleteClinic = (id) => { 
+    if(confirm("ลบข้อมูลคลินิกนี้?")) {
+      const newData = data.filter(d=>d.id!==id);
+      setData(newData);
+      save(newData);
+    }
+  };
+
+  // ฟังก์ชัน Export ข้อมูล
+  const exportData = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", "aoikumo_pipeline_backup.json");
+    dlAnchorElem.click();
+  };
+
+  // ฟังก์ชัน Import ข้อมูล
+  const importData = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (Array.isArray(importedData)) {
+            setData(importedData);
+            save(importedData);
+            alert("✅ นำเข้าข้อมูลสำเร็จเรียบร้อยครับ!");
+          }
+        } catch (err) {
+          alert("❌ รูปแบบไฟล์ไม่ถูกต้อง กรุณาใช้ไฟล์ .json ที่ได้จากการ Export");
+        }
+        event.target.value = null; // รีเซ็ต input
+      };
+      reader.readAsText(file);
+    }
+  };
 
   const openAddModal = () => { setEditingData(null); setShowModal(true); };
   const openEditModal = (clinic) => { setEditingData(clinic); setShowModal(true); };
@@ -240,6 +304,9 @@ function App() {
 
   return React.createElement("div", { style:{ background:"#020617", minHeight:"100vh", padding:"24px 28px" }},
     showModal && React.createElement(Modal, { initialData: editingData, onSave: handleSaveClinic, onClose:()=> { setShowModal(false); setEditingData(null); }, currentPeriod: defaultModalMonth }),
+    
+    // ซ่อน Input สำหรับการ Import ไฟล์
+    React.createElement("input", { type:"file", accept:".json", ref: fileInputRef, style:{ display:"none" }, onChange: importData }),
 
     // Header
     React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }},
@@ -251,16 +318,25 @@ function App() {
           ),
           React.createElement("select", { 
             value: selectedPeriod, 
-            onChange: e => setSelectedPeriod(e.target.value), 
+            onChange: e => { setSelectedPeriod(e.target.value); setSearchQuery(""); }, 
             style: { marginLeft: 15, background:"#1e293b", border:"1px solid #6366f1", borderRadius:8, padding:"6px 12px", color:"#f8fafc", fontSize:16, outline:"none", cursor:"pointer", fontWeight:700 }
           },
             ...DISPLAY_PERIODS.map(p => React.createElement("option", { key:p }, p))
           )
         ),
-        React.createElement("div", { style:{ color:"#475569", fontSize:13, marginLeft:18 }}, "สลับไปที่ 'Closed Won' เพื่อดูทำเนียบลูกค้าที่ปิดดีลสำเร็จ")
+        React.createElement("div", { style:{ color:"#475569", fontSize:13, marginLeft:18 }}, "ข้อมูลบันทึกในเครื่อง (สลับดูภาพรวม หรือดูแยกตามเดือนได้)")
       ),
       React.createElement("div", { style:{ display:"flex", gap:10 }},
-        React.createElement("button", { onClick:save, style:{ background: saved ? "#10b981" : "#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 18px", color:"#f8fafc", fontWeight:700, fontSize:14, cursor:"pointer" }},
+        // กลุ่มปุ่ม Backup
+        React.createElement("div", { style: { display: "flex", gap: 5, marginRight: 10, borderRight: "1px solid #334155", paddingRight: 15 } },
+           React.createElement("button", { onClick: exportData, style:{ background:"#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 14px", color:"#94a3b8", fontWeight:600, fontSize:13, cursor:"pointer" }, title: "สำรองข้อมูลเก็บไว้ในเครื่อง" },
+            "⬇️ Export"
+          ),
+          React.createElement("button", { onClick: () => fileInputRef.current.click(), style:{ background:"#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 14px", color:"#94a3b8", fontWeight:600, fontSize:13, cursor:"pointer" }, title: "ดึงข้อมูลที่เคยสำรองไว้กลับมา" },
+            "⬆️ Import"
+          )
+        ),
+        React.createElement("button", { onClick:()=>save(), style:{ background: saved ? "#10b981" : "#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 18px", color:"#f8fafc", fontWeight:700, fontSize:14, cursor:"pointer" }},
           saved ? "✅ บันทึกแล้ว" : "💾 บันทึก"
         ),
         React.createElement("button", { onClick:openAddModal, style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:12, padding:"10px 20px", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer", boxShadow:"0 4px 20px #6366f144" }},
@@ -349,53 +425,92 @@ function App() {
       )
     ),
 
-    // Table
+    // Table Header Area (ที่มีช่องค้นหาและ Filter)
     React.createElement("div", { style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:16, padding:20 }},
-      React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }},
-        React.createElement("div", { style:{ fontWeight:700, fontSize:14, color:"#e2e8f0" }}, 
-          selectedPeriod === "🏆 รายการที่ปิดดีลได้ (Closed Won)" ? "🏆 ทำเนียบลูกค้าที่ปิดดีลสำเร็จ" : "📋 รายชื่อ Lead"
+      React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:15 }},
+        React.createElement("div", { style:{ fontWeight:700, fontSize:16, color:"#e2e8f0" }}, 
+          selectedPeriod === "🏆 รายการที่ปิดดีลได้ (Closed Won)" ? "🏆 ทำเนียบลูกค้าที่ปิดดีลสำเร็จ" : "📋 รายชื่อ Lead ที่ต้องติดตาม"
         ),
-        React.createElement("div", { style:{ display:"flex", gap:10 }},
+        React.createElement("div", { style:{ display:"flex", gap:10, alignItems: "center" }},
+          // ช่องค้นหาใหม่
+          React.createElement("input", { 
+            type: "text", 
+            placeholder: "🔍 ค้นหาชื่อคลินิก...", 
+            value: searchQuery, 
+            onChange: e => setSearchQuery(e.target.value), 
+            style: { ...selectStyle, padding: "8px 12px", width: "220px", color: "#f8fafc" } 
+          }),
+          React.createElement("div", { style: { width: "1px", height: "20px", background: "#334155", margin: "0 5px" } }), // เส้นคั่น
           React.createElement("select", { value:filterType, onChange:e=>setFilterType(e.target.value), style:selectStyle },
-            React.createElement("option", null, "ทั้งหมด"),
+            React.createElement("option", null, "ทุกประเภท"),
             ...TYPES.map(t => React.createElement("option", { key:t }, t))
           ),
           React.createElement("select", { value:filterStage, onChange:e=>setFilterStage(e.target.value), style:selectStyle },
-            React.createElement("option", null, "ทั้งหมด"),
+            React.createElement("option", null, "ทุก Stage"),
             ...STAGES.map(s => React.createElement("option", { key:s }, s))
           )
         )
       ),
+      // ส่วนของตาราง
       React.createElement("div", { style:{ overflowX:"auto" }},
         React.createElement("table", null,
           React.createElement("thead", null,
             React.createElement("tr", { style:{ borderBottom:"1px solid #1e293b" }},
-              ...["ชื่อคลินิก","เดือนที่ปิด","ประเภท","แพ็กเกจ","มูลค่าที่ปิด","สถานะ","จัดการ"].map(h =>
-                React.createElement("th", { key:h, style:{ padding:"8px 12px", textAlign:"left", color:"#475569", fontWeight:600, fontSize:11 }}, h)
+              ...["ชื่อคลินิก","เดือน","ประเภท","แพ็กเกจ","มูลค่า (บาท)","สถานะ/อัปเดต","โน้ต/สิ่งที่ต้องทำ","จัดการ"].map((h, i) =>
+                React.createElement("th", { key:h, style:{ padding:"8px 12px", textAlign:"left", color:"#475569", fontWeight:600, fontSize:11, width: i===6 ? "20%" : "auto" }}, h)
               )
             )
           ),
           React.createElement("tbody", null,
             ...filtered.map((d,i) => {
+              const pri = PRIORITY_BADGE[d.priority] || PRIORITY_BADGE["กลาง"];
+              const isClosed = d.stage === "ปิดดีลแล้ว";
               return React.createElement("tr", { key:d.id, style:{ borderBottom:"1px solid #0f172a", background: i%2===0 ? "#0a1628":"transparent" }},
-                React.createElement("td", { style:{ padding:"10px 12px", color:"#e2e8f0", fontWeight:600 }}, d.name),
-                React.createElement("td", { style:{ padding:"10px 12px", color:"#64748b", fontSize: 11 }}, d.month.split(" ")[0]),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("span", { style:{ background:`${TYPE_COLORS[d.type]}22`, color:TYPE_COLORS[d.type], padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.type)
+                // ชื่อ
+                React.createElement("td", { style:{ padding:"10px 12px" }}, 
+                  React.createElement("div", { style:{ color:"#e2e8f0", fontWeight:700, marginBottom:4 }}, d.name),
+                  React.createElement("span", { style:{ background:pri.bg, color:pri.text, padding:"2px 6px", borderRadius:10, fontSize:10, fontWeight:600 }}, `Priority: ${d.priority}`)
                 ),
-                React.createElement("td", { style:{ padding:"10px 12px", color:"#94a3b8", fontSize: 11 }}, d.package || "ไม่ระบุ"),
-                React.createElement("td", { style:{ padding:"10px 12px", color:"#10b981", fontWeight:700 }}, `฿${d.value.toLocaleString()}`),
+                // เดือน
+                React.createElement("td", { style:{ padding:"10px 12px", color:"#64748b", fontSize: 12 }}, d.month ? d.month.split(" ")[0] : "-"),
+                // ประเภท
                 React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("span", { style:{ background:`${STAGE_COLORS[d.stage]}22`, color:STAGE_COLORS[d.stage], padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.stage)
+                  React.createElement("span", { style:{ background:`${TYPE_COLORS[d.type]}22`, color:TYPE_COLORS[d.type], padding:"3px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.type)
                 ),
-                React.createElement("td", { style:{ padding:"10px 12px", display:"flex", gap: 10, alignItems: "center" }},
-                  React.createElement("button", { onClick:()=>openEditModal(d), style:{ background:"none", border:"none", cursor:"pointer", fontSize:14 }}, "✏️"),
-                  React.createElement("button", { onClick:()=>deleteClinic(d.id), style:{ background:"none", border:"none", color:"#ef4444", cursor:"pointer", fontSize:14 }}, "🗑️")
+                // แพ็กเกจ
+                React.createElement("td", { style:{ padding:"10px 12px", color:"#94a3b8", fontSize: 12 }}, d.package || "ไม่ระบุ"),
+                // มูลค่า
+                React.createElement("td", { style:{ padding:"10px 12px", color: isClosed ? "#10b981" : "#e2e8f0", fontWeight: isClosed ? 700 : 400 }}, d.value ? `฿${d.value.toLocaleString()}` : "-"),
+                // Stage + โอกาสปิด (รวมไว้ช่องเดียวกัน)
+                React.createElement("td", { style:{ padding:"10px 12px" }},
+                  React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:6 }},
+                    React.createElement("select", { value:d.stage, onChange:e=>updateStage(d.id,e.target.value), style:{ background:"#1e293b", border:`1px solid ${STAGE_COLORS[d.stage]}55`, borderRadius:6, padding:"4px 8px", color:STAGE_COLORS[d.stage], fontSize:11, outline:"none", cursor:"pointer", fontWeight:600 }},
+                      ...STAGES.map(s => React.createElement("option", { key:s }, s))
+                    ),
+                    React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:6 }},
+                      React.createElement("div", { style:{ width:40, height:4, background:"#1e293b", borderRadius:2, overflow:"hidden" }},
+                        React.createElement("div", { style:{ width:`${d.prob}%`, height:"100%", background: d.prob>=70?"#10b981":d.prob>=40?"#f59e0b":"#6366f1" }})
+                      ),
+                      React.createElement("span", { style:{ color:"#64748b", fontSize:10 }}, `${d.prob}%`)
+                    )
+                  )
+                ),
+                // โน้ต
+                React.createElement("td", { style:{ padding:"10px 12px" }},
+                  d.note ? React.createElement("div", { style:{ color:"#94a3b8", fontSize:12, background:"#1e293b", padding:"6px 10px", borderRadius:6, lineHeight:1.4 }}, d.note)
+                         : React.createElement("div", { style:{ color:"#475569", fontSize:12, fontStyle:"italic" }}, "-")
+                ),
+                // จัดการ
+                React.createElement("td", { style:{ padding:"10px 12px" }},
+                  React.createElement("div", { style:{ display:"flex", gap: 10 }},
+                    React.createElement("button", { onClick:()=>openEditModal(d), style:{ background:"#3b82f622", border:"none", color:"#60a5fa", padding:"6px", borderRadius:6, cursor:"pointer", fontSize:12 }}, "✏️"),
+                    React.createElement("button", { onClick:()=>deleteClinic(d.id), style:{ background:"#ef444422", border:"none", color:"#ef4444", padding:"6px", borderRadius:6, cursor:"pointer", fontSize:12 }}, "🗑️")
+                  )
                 )
               );
             }),
             filtered.length===0 && React.createElement("tr", null,
-              React.createElement("td", { colSpan:7, style:{ textAlign:"center", padding:32, color:"#475569" }}, "ยังไม่มีข้อมูลในส่วนนี้")
+              React.createElement("td", { colSpan:8, style:{ textAlign:"center", padding:32, color:"#475569" }}, "ไม่พบข้อมูลที่ค้นหา")
             )
           )
         )
