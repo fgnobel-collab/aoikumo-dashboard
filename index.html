@@ -52,7 +52,6 @@ const TYPES = [
   "Others"
 ];
 
-// รวมแพ็กเกจทั้งหมดไว้สำหรับตอนเลือก Others
 const ALL_PACKAGES = [
   "ไม่ระบุ",
   "Grow", "Aesthetics", "Medical Aesthetics",
@@ -69,7 +68,7 @@ const PACKAGE_MAP = {
   "Dental (ทำฟัน)": ["ไม่ระบุ", "Dental Lite", "Dental", "Dental +"],
   "Vet (รักษาสัตว์)": ["ไม่ระบุ", "kumoVet", "kumoVet GROOM", "kumoVet PLUS"],
   "Hair (ดูแลเส้นผม)": ["ไม่ระบุ", "Hair", "Hair PLUS"],
-  "Others": ALL_PACKAGES // ดึงทุกแพ็กเกจมาแสดง
+  "Others": ALL_PACKAGES
 };
 
 const STAGES = ["Prospect","Interested","Follow Up","นัด Demo","Demo แล้ว","อยู่ระหว่างทดลอง Trial","รอเซ็นสัญญา","ปิดดีลแล้ว","ไม่สนใจ"];
@@ -120,7 +119,6 @@ function KPICard({ label, value, sub, color, icon }) {
 }
 
 function Modal({ initialData, onSave, onClose, currentPeriod }) {
-  // เช็คข้อมูลเดิมว่าอยู่ในลิสต์ TYPES ปกติไหม ถ้าไม่อยู่แปลว่าเป็นประเภทที่พิมพ์เอง ให้โยกไปเข้าหมวด "Others"
   let initType = "Aesthetic (ความงาม)";
   let initCustomType = "";
   if (initialData) {
@@ -139,7 +137,7 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
       const newForm = { ...f, [k]: v };
       if (k === 'type') {
         newForm.package = "ไม่ระบุ";
-        if (v !== 'Others') newForm.customType = ""; // เคลียร์ข้อความที่พิมพ์เองออก ถ้ากลับไปเลือกตัวเลือกปกติ
+        if (v !== 'Others') newForm.customType = ""; 
       }
       if (k === 'stage' && v === 'ปิดดีลแล้ว') newForm.prob = 100;
       return newForm;
@@ -155,7 +153,6 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
         React.createElement("div", { style:{ color:"#f8fafc", fontWeight:700, fontSize:18, fontFamily:"'Space Grotesk',sans-serif" }}, isEditing ? "✏️ แก้ไขข้อมูลคลินิก" : "➕ เพิ่มคลินิกใหม่"),
         React.createElement("button", { onClick:onClose, style:{ background:"none", border:"none", color:"#64748b", fontSize:20, cursor:"pointer" }}, "✕")
       ),
-      // ข้อมูลพื้นฐาน
       ...[
         { label:"ชื่อคลินิก", key:"name", type:"text" },
         { label:"มูลค่าที่เสนอ (บาท/ปี)", key:"value", type:"number" },
@@ -166,7 +163,6 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
           React.createElement("input", { type, value:form[key], onChange:e=>handleChange(key,e.target.value), style:inputStyle })
         )
       ),
-      // ข้อมูลแบบ Dropdown
       ...[
         { label:"ประจำเดือน", key:"month", opts: FORM_PERIODS },
         { label:"ประเภทคลินิก", key:"type", opts:TYPES },
@@ -179,7 +175,6 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
           React.createElement("select", { value:form[key], onChange:e=>handleChange(key,e.target.value), style:inputStyle },
             ...opts.map(o => React.createElement("option", { key:o }, o))
           ),
-          // ช่องพิมพ์ประเภทเพิ่มเติม ถ้าเลือก Others
           (key === 'type' && form.type === 'Others') && React.createElement("input", {
             type: "text",
             placeholder: "ระบุประเภทคลินิก (เช่น คลินิกฝังเข็ม, คลินิกสายตา)",
@@ -189,7 +184,6 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
           })
         )
       ),
-      // โน้ต
       React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:6 }},
         React.createElement("label", { style:{ color:"#94a3b8", fontSize:12 }}, "หมายเหตุ / สิ่งที่ต้องทำต่อ"),
         React.createElement("textarea", { 
@@ -201,7 +195,6 @@ function Modal({ initialData, onSave, onClose, currentPeriod }) {
       ),
       React.createElement("button", {
         onClick:() => { 
-          // เซฟประเภทคลินิกที่พิมพ์เอง
           const finalType = form.type === 'Others' && form.customType.trim() !== '' ? form.customType.trim() : form.type;
           onSave({...form, type: finalType, id: form.id || Date.now(), value:Number(form.value)||0, prob:Number(form.prob)||0}); 
         },
@@ -243,7 +236,6 @@ function App() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  // กรองข้อมูลเบื้องต้นตามมุมมอง
   let activeData = selectedPeriod === "🌟 ภาพรวม: ต้องตามต่อ (Active)" 
     ? data.filter(d => d.stage !== "ปิดดีลแล้ว" && d.stage !== "ไม่สนใจ")
     : selectedPeriod === "🏆 รายการที่ปิดดีลได้ (Closed Won)"
@@ -252,14 +244,13 @@ function App() {
     ? data
     : data.filter(d => d.month === selectedPeriod);
 
-  // กรองต่อด้วยช่องค้นหา (Search)
   if (searchQuery.trim() !== "") {
     activeData = activeData.filter(d => d.name.toLowerCase().includes(searchQuery.toLowerCase()) || (d.note && d.note.toLowerCase().includes(searchQuery.toLowerCase())) || (d.type && d.type.toLowerCase().includes(searchQuery.toLowerCase())));
   }
 
-  // กรองต่อด้วย Dropdown (เช็คประเภทคลินิกที่พิมพ์เองให้ไปตกอยู่ใน Filter "Others")
+  // ตัวกรองที่แก้บั๊กแล้ว: ให้เข้าใจว่าถ้าเลือก 'ทั้งหมด' ไม่ต้องกรอง
   const filtered = activeData.filter(d => {
-    const isStandardType = TYPES.slice(0, -1).includes(d.type); // เช็คว่าเป็นประเภทหลักไหม (ตัด Others ทิ้ง)
+    const isStandardType = TYPES.slice(0, -1).includes(d.type); 
     const matchType = filterType === "ทั้งหมด" || 
                       (filterType === "Others" ? !isStandardType : d.type === filterType);
     const matchStage = filterStage === "ทั้งหมด" || d.stage === filterStage;
@@ -271,7 +262,6 @@ function App() {
   const closedOnlyValue = activeData.filter(d => d.stage === "ปิดดีลแล้ว").reduce((s,d) => s+d.value, 0);
   const conversionRate = activeData.length > 0 ? Math.round((activeData.filter(d=>d.stage==="ปิดดีลแล้ว").length / activeData.length)*100) : 0;
 
-  // สำหรับ PieChart จะรวบรวมประเภทที่พิมพ์เองทั้งหมดเข้าไปอยู่ในก้อน Others
   const typeData = TYPES.map(t => {
     if (t === "Others") {
       return { name: t, value: activeData.filter(d => !TYPES.slice(0, -1).includes(d.type)).length };
@@ -483,13 +473,15 @@ function App() {
             style: { ...selectStyle, padding: "8px 12px", width: "220px", color: "#f8fafc" } 
           }),
           React.createElement("div", { style: { width: "1px", height: "20px", background: "#334155", margin: "0 5px" } }), 
+          
+          // ตัวกรองที่เพิ่ม value ให้ชัดเจน
           React.createElement("select", { value:filterType, onChange:e=>setFilterType(e.target.value), style:selectStyle },
-            React.createElement("option", null, "ทุกประเภท"),
-            ...TYPES.map(t => React.createElement("option", { key:t }, t))
+            React.createElement("option", { value: "ทั้งหมด" }, "ทุกประเภท"),
+            ...TYPES.map(t => React.createElement("option", { key:t, value: t }, t))
           ),
           React.createElement("select", { value:filterStage, onChange:e=>setFilterStage(e.target.value), style:selectStyle },
-            React.createElement("option", null, "ทุก Stage"),
-            ...STAGES.map(s => React.createElement("option", { key:s }, s))
+            React.createElement("option", { value: "ทั้งหมด" }, "ทุก Stage"),
+            ...STAGES.map(s => React.createElement("option", { key:s, value: s }, s))
           )
         )
       ),
@@ -507,29 +499,23 @@ function App() {
             ...filtered.map((d,i) => {
               const pri = PRIORITY_BADGE[d.priority] || PRIORITY_BADGE["กลาง"];
               const isClosed = d.stage === "ปิดดีลแล้ว";
-              const typeColor = TYPE_COLORS[d.type] || "#94a3b8"; // สีเทาถ้าเป็นหมวดที่พิมพ์เอง
+              const typeColor = TYPE_COLORS[d.type] || "#94a3b8"; 
               
               return React.createElement("tr", { key:d.id, style:{ borderBottom:"1px solid #0f172a", background: i%2===0 ? "#0a1628":"transparent" }},
-                // ชื่อ
                 React.createElement("td", { style:{ padding:"10px 12px" }}, 
                   React.createElement("div", { style:{ color:"#e2e8f0", fontWeight:700, marginBottom:4 }}, d.name),
                   React.createElement("span", { style:{ background:pri.bg, color:pri.text, padding:"2px 6px", borderRadius:10, fontSize:10, fontWeight:600 }}, `Priority: ${d.priority}`)
                 ),
-                // เดือน
                 React.createElement("td", { style:{ padding:"10px 12px", color:"#64748b", fontSize: 12 }}, d.month ? d.month.split(" ")[0] : "-"),
-                // ประเภท
                 React.createElement("td", { style:{ padding:"10px 12px" }},
                   React.createElement("span", { style:{ background:`${typeColor}22`, color:typeColor, padding:"3px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.type)
                 ),
-                // แพ็กเกจ
                 React.createElement("td", { style:{ padding:"10px 12px", color:"#94a3b8", fontSize: 12 }}, d.package || "ไม่ระบุ"),
-                // มูลค่า
                 React.createElement("td", { style:{ padding:"10px 12px", color: isClosed ? "#10b981" : "#e2e8f0", fontWeight: isClosed ? 700 : 400 }}, d.value ? `฿${d.value.toLocaleString()}` : "-"),
-                // Stage + โอกาสปิด (รวมไว้ช่องเดียวกัน)
                 React.createElement("td", { style:{ padding:"10px 12px" }},
                   React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:6 }},
                     React.createElement("select", { value:d.stage, onChange:e=>updateStage(d.id,e.target.value), style:{ background:"#1e293b", border:`1px solid ${STAGE_COLORS[d.stage]}55`, borderRadius:6, padding:"4px 8px", color:STAGE_COLORS[d.stage], fontSize:11, outline:"none", cursor:"pointer", fontWeight:600 }},
-                      ...STAGES.map(s => React.createElement("option", { key:s }, s))
+                      ...STAGES.map(s => React.createElement("option", { key:s, value: s }, s))
                     ),
                     React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:6 }},
                       React.createElement("div", { style:{ width:40, height:4, background:"#1e293b", borderRadius:2, overflow:"hidden" }},
@@ -539,12 +525,10 @@ function App() {
                     )
                   )
                 ),
-                // โน้ต
                 React.createElement("td", { style:{ padding:"10px 12px" }},
                   d.note ? React.createElement("div", { style:{ color:"#94a3b8", fontSize:12, background:"#1e293b", padding:"6px 10px", borderRadius:6, lineHeight:1.4 }}, d.note)
                          : React.createElement("div", { style:{ color:"#475569", fontSize:12, fontStyle:"italic" }}, "-")
                 ),
-                // จัดการ
                 React.createElement("td", { style:{ padding:"10px 12px" }},
                   React.createElement("div", { style:{ display:"flex", gap: 10 }},
                     React.createElement("button", { onClick:()=>openEditModal(d), style:{ background:"#3b82f622", border:"none", color:"#60a5fa", padding:"6px", borderRadius:6, cursor:"pointer", fontSize:12 }}, "✏️"),
