@@ -169,7 +169,8 @@ const dataDict = {
   "แคนวาส (Canvas)": "Canvas / Cold Call",
   "ลูกค้าเก่า": "Existing Customer / Referral",
   "งานอีเว้นท์": "Event / Exhibition",
-  "ออนไลน์": "Online / Inbound"
+  "ออนไลน์": "Online / Inbound",
+  "บริษัทแม่ (HQ)": "HQ / Parent Company"
 };
 
 const FORM_PERIODS = [
@@ -206,7 +207,7 @@ const PACKAGE_MAP = {
 };
 
 const STAGES = ["Prospect","Interested","Follow Up","นัด Demo","Demo แล้ว","อยู่ระหว่างทดลอง Trial","รอเซ็นสัญญา","ปิดดีลแล้ว","ไม่สนใจ"];
-const SOURCES = ["ไม่ระบุ", "แคนวาส (Canvas)", "ลูกค้าเก่า", "งานอีเว้นท์", "ออนไลน์", "Others"];
+const SOURCES = ["ไม่ระบุ", "แคนวาส (Canvas)", "ลูกค้าเก่า", "งานอีเว้นท์", "ออนไลน์", "บริษัทแม่ (HQ)", "Others"];
 
 const STAGE_COLORS = {
   "Prospect":"#94a3b8","Interested":"#60a5fa","Follow Up":"#f59e0b",
@@ -227,7 +228,7 @@ const PRIORITY_BADGE = {
 
 const INITIAL_DATA = [
   { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Medical Aesthetics", source: "แคนวาส (Canvas)", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569", note: "รอหมอเซ็นเอกสาร" },
-  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aesthetics", source: "ลูกค้าเก่า", stage: "อยู่ระหว่างทดลอง Trial", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569", note: "ส่งลิงก์ทดลองใช้ให้ผู้ช่วยหมอแล้ว" },
+  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aesthetics", source: "บริษัทแม่ (HQ)", stage: "อยู่ระหว่างทดลอง Trial", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569", note: "ส่งลิงก์ทดลองใช้ให้ผู้ช่วยหมอแล้ว" },
   { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "GP", source: "ออนไลน์", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569", note: "" },
   { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "Wellness", source: "งานอีเว้นท์", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569", note: "ทักไปตอนโปรโมชั่น" }
 ];
@@ -386,7 +387,7 @@ function App() {
           ...item,
           month: item.month || "พฤษภาคม 2569",
           package: item.package || "ไม่ระบุ",
-          source: item.source || "ไม่ระบุ", // กันเหนียวข้อมูลเก่า
+          source: item.source || "ไม่ระบุ",
           note: item.note || ""
         }));
       }
