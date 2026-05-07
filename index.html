@@ -16,7 +16,7 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-    table { border-collapse: collapse; width: 100%; }
+    table { border-collapse: collapse; width: 100%; min-width: 1000px; }
     
     .modal-scroll::-webkit-scrollbar { width: 6px; }
     .modal-scroll::-webkit-scrollbar-track { background: #1e293b; border-radius: 8px; }
@@ -29,7 +29,7 @@
 const { useState, useEffect, useRef } = React;
 const { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
 
-// ================= DICTIONARY สำหรับแปลภาษา =================
+// ================= DICTIONARY สำหรับคำศัพท์ทั่วไป UI =================
 const dict = {
   th: {
     appTitle: "Aoikumo Sales Dashboard",
@@ -39,7 +39,6 @@ const dict = {
     saveBtn: "💾 บันทึก",
     savedBtn: "✅ บันทึกแล้ว",
     addBtn: "➕ เพิ่มคลินิก",
-    // KPI
     kpiLead: "Lead ทั้งหมด",
     kpiLeadSub: "Filtered: {count} เจ้า",
     kpiWonTitle: "ดีลที่ปิดสำเร็จ",
@@ -49,11 +48,9 @@ const dict = {
     kpiClosedSub: "นับเฉพาะที่ปิดดีลแล้ว",
     kpiConv: "Conversion Rate",
     kpiConvSub: "สัดส่วนความสำเร็จ",
-    // Charts
     chartPieTitle: "🏷️ สัดส่วนตามประเภทลูกค้า",
     chartBarTitle: "📊 มูลค่าเงินแยกตาม Stage",
     chartFunnelTitle: "🔽 จำนวนลูกค้าในแต่ละ Stage",
-    // Table Header
     tableTitleActive: "📋 รายชื่อ Lead ที่ต้องติดตาม",
     tableTitleWon: "🏆 ทำเนียบลูกค้าที่ปิดดีลสำเร็จ",
     searchPlaceholder: "🔍 ค้นหาชื่อคลินิก...",
@@ -63,12 +60,12 @@ const dict = {
     thMonth: "เดือน",
     thType: "ประเภท",
     thPackage: "แพ็กเกจ",
+    thSource: "ที่มา",
     thValue: "มูลค่า (บาท)",
     thStage: "สถานะ/อัปเดต",
     thNote: "โน้ต/สิ่งที่ต้องทำ",
     thAction: "จัดการ",
     noData: "ไม่พบข้อมูลที่ค้นหา",
-    // Modal
     modalAdd: "➕ เพิ่มคลินิกใหม่",
     modalEdit: "✏️ แก้ไขข้อมูลคลินิก",
     lblValue: "มูลค่าที่เสนอ (บาท/ปี)",
@@ -76,26 +73,28 @@ const dict = {
     lblMonth: "ประจำเดือน",
     lblType: "ประเภทคลินิก",
     lblPackage: "แพ็กเกจโปรแกรมที่สนใจ",
+    lblSource: "ที่มาของลูกค้า (Lead Source)",
     lblStage: "Stage ปัจจุบัน",
     lblPriority: "Priority ความสำคัญ",
     lblNote: "หมายเหตุ / สิ่งที่ต้องทำต่อ",
     plhNote: "เช่น ลูกค้าขอทดลองใช้ระบบ 7 วัน, หมอไปต่างประเทศ...",
     plhCustomType: "ระบุประเภทคลินิก (เช่น คลินิกฝังเข็ม, คลินิกสายตา)",
+    plhCustomSource: "ระบุที่มาของลูกค้า...",
     btnUpdate: "อัปเดตข้อมูล",
     btnSaveModal: "บันทึกข้อมูล",
     confirmDelete: "ลบข้อมูลคลินิกนี้?",
     importSuccess: "✅ นำเข้าข้อมูลสำเร็จเรียบร้อยครับ!",
-    importFail: "❌ รูปแบบไฟล์ไม่ถูกต้อง กรุณาใช้ไฟล์ .json ที่ได้จากการ Export"
+    importFail: "❌ รูปแบบไฟล์ไม่ถูกต้อง กรุณาใช้ไฟล์ .json ที่ได้จากการ Export",
+    lblTotal: "ทั้งหมด"
   },
   en: {
     appTitle: "Aoikumo Sales Dashboard",
-    subtitle: "Local Storage Data (Switch between Overview and Monthly views)",
+    subtitle: "Local Storage Data (Switch Overview / Monthly views)",
     exportBtn: "⬇️ Export",
     importBtn: "⬆️ Import",
     saveBtn: "💾 Save",
     savedBtn: "✅ Saved",
     addBtn: "➕ Add Clinic",
-    // KPI
     kpiLead: "Total Leads",
     kpiLeadSub: "Filtered: {count} clinics",
     kpiWonTitle: "Closed Won Deals",
@@ -105,11 +104,9 @@ const dict = {
     kpiClosedSub: "Closed Won only",
     kpiConv: "Conversion Rate",
     kpiConvSub: "Success Ratio",
-    // Charts
     chartPieTitle: "🏷️ Proportion by Clinic Type",
     chartBarTitle: "📊 Value by Stage",
     chartFunnelTitle: "🔽 Number of Clinics by Stage",
-    // Table Header
     tableTitleActive: "📋 Active Leads to Follow Up",
     tableTitleWon: "🏆 Closed Won Hall of Fame",
     searchPlaceholder: "🔍 Search clinic name...",
@@ -119,32 +116,61 @@ const dict = {
     thMonth: "Month",
     thType: "Type",
     thPackage: "Package",
+    thSource: "Source",
     thValue: "Value (THB)",
     thStage: "Stage/Update",
     thNote: "Note/To-do",
     thAction: "Action",
     noData: "No data found",
-    // Modal
     modalAdd: "➕ Add New Clinic",
     modalEdit: "✏️ Edit Clinic Data",
-    lblValue: "Proposed Value (THB/Year)",
+    lblValue: "Proposed Value (THB/Yr)",
     lblProb: "Probability (%)",
     lblMonth: "Month",
     lblType: "Clinic Type",
     lblPackage: "Interested Package",
+    lblSource: "Lead Source",
     lblStage: "Current Stage",
     lblPriority: "Priority",
     lblNote: "Notes / To-dos",
     plhNote: "e.g., Client requested 7 days trial, Doctor is abroad...",
     plhCustomType: "Specify clinic type (e.g., Acupuncture, Eye Clinic)",
+    plhCustomSource: "Specify lead source...",
     btnUpdate: "Update Data",
     btnSaveModal: "Save Data",
     confirmDelete: "Delete this clinic data?",
     importSuccess: "✅ Data imported successfully!",
-    importFail: "❌ Invalid file format. Please use the .json file from Export."
+    importFail: "❌ Invalid file format. Please use the .json file from Export.",
+    lblTotal: "All"
   }
 };
-// =========================================================
+
+// ================= DICTIONARY สำหรับแปลงข้อมูล (Data Translation) =================
+const dataDict = {
+  "มกราคม 2569": "Jan 2026", "กุมภาพันธ์ 2569": "Feb 2026", "มีนาคม 2569": "Mar 2026", "เมษายน 2569": "Apr 2026",
+  "พฤษภาคม 2569": "May 2026", "มิถุนายน 2569": "Jun 2026", "กรกฎาคม 2569": "Jul 2026", "สิงหาคม 2569": "Aug 2026",
+  "กันยายน 2569": "Sep 2026", "ตุลาคม 2569": "Oct 2026", "พฤศจิกายน 2569": "Nov 2026", "ธันวาคม 2569": "Dec 2026",
+  "🌟 ภาพรวม: ต้องตามต่อ (Active)": "🌟 Overview: Active Leads",
+  "🏆 รายการที่ปิดดีลได้ (Closed Won)": "🏆 Closed Won List",
+  "📊 ภาพรวม: ทั้งหมด (All Time)": "📊 Overview: All Time",
+  "Aesthetic (ความงาม)": "Aesthetic",
+  "General Clinic (คลินิกทั่วไป)": "General Clinic",
+  "Wellness / กายภาพ": "Wellness / Physio",
+  "Dental (ทำฟัน)": "Dental",
+  "Vet (รักษาสัตว์)": "Vet",
+  "Hair (ดูแลเส้นผม)": "Hair",
+  "Others": "Others",
+  "Prospect": "Prospect", "Interested": "Interested", "Follow Up": "Follow Up", "นัด Demo": "Demo Booked",
+  "Demo แล้ว": "Demo Done", "อยู่ระหว่างทดลอง Trial": "In Trial", "รอเซ็นสัญญา": "Pending Contract",
+  "ปิดดีลแล้ว": "Closed Won", "ไม่สนใจ": "Not Interested",
+  "สูง": "High", "กลาง": "Medium", "ต่ำ": "Low",
+  "ไม่ระบุ": "Unspecified",
+  // Sources
+  "แคนวาส (Canvas)": "Canvas / Cold Call",
+  "ลูกค้าเก่า": "Existing Customer / Referral",
+  "งานอีเว้นท์": "Event / Exhibition",
+  "ออนไลน์": "Online / Inbound"
+};
 
 const FORM_PERIODS = [
   "มกราคม 2569", "กุมภาพันธ์ 2569", "มีนาคม 2569", "เมษายน 2569",
@@ -160,22 +186,13 @@ const DISPLAY_PERIODS = [
 ];
 
 const TYPES = [
-  "Aesthetic (ความงาม)",
-  "General Clinic (คลินิกทั่วไป)",
-  "Wellness / กายภาพ",
-  "Dental (ทำฟัน)",
-  "Vet (รักษาสัตว์)",
-  "Hair (ดูแลเส้นผม)",
-  "Others"
+  "Aesthetic (ความงาม)", "General Clinic (คลินิกทั่วไป)", "Wellness / กายภาพ",
+  "Dental (ทำฟัน)", "Vet (รักษาสัตว์)", "Hair (ดูแลเส้นผม)", "Others"
 ];
 
 const ALL_PACKAGES = [
-  "ไม่ระบุ",
-  "Grow", "Aesthetics", "Medical Aesthetics",
-  "GP", "GP +", "Wellness",
-  "Dental Lite", "Dental", "Dental +",
-  "kumoVet", "kumoVet GROOM", "kumoVet PLUS",
-  "Hair", "Hair PLUS"
+  "ไม่ระบุ", "Grow", "Aesthetics", "Medical Aesthetics", "GP", "GP +", "Wellness",
+  "Dental Lite", "Dental", "Dental +", "kumoVet", "kumoVet GROOM", "kumoVet PLUS", "Hair", "Hair PLUS"
 ];
 
 const PACKAGE_MAP = {
@@ -189,6 +206,7 @@ const PACKAGE_MAP = {
 };
 
 const STAGES = ["Prospect","Interested","Follow Up","นัด Demo","Demo แล้ว","อยู่ระหว่างทดลอง Trial","รอเซ็นสัญญา","ปิดดีลแล้ว","ไม่สนใจ"];
+const SOURCES = ["ไม่ระบุ", "แคนวาส (Canvas)", "ลูกค้าเก่า", "งานอีเว้นท์", "ออนไลน์", "Others"];
 
 const STAGE_COLORS = {
   "Prospect":"#94a3b8","Interested":"#60a5fa","Follow Up":"#f59e0b",
@@ -196,21 +214,9 @@ const STAGE_COLORS = {
   "รอเซ็นสัญญา":"#f97316","ปิดดีลแล้ว":"#10b981","ไม่สนใจ":"#ef4444"
 };
 
-const INITIAL_DATA = [
-  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Medical Aesthetics", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569", note: "รอหมอเซ็นเอกสาร" },
-  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aesthetics", stage: "อยู่ระหว่างทดลอง Trial", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569", note: "ส่งลิงก์ทดลองใช้ให้ผู้ช่วยหมอแล้ว" },
-  { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "GP", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569", note: "" },
-  { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569", note: "ทักไปตอนโปรโมชั่น" }
-];
-
 const TYPE_COLORS = {
-  "Aesthetic (ความงาม)":"#e879f9",
-  "General Clinic (คลินิกทั่วไป)":"#38bdf8",
-  "Wellness / กายภาพ":"#4ade80",
-  "Dental (ทำฟัน)":"#fb923c",
-  "Vet (รักษาสัตว์)":"#facc15",
-  "Hair (ดูแลเส้นผม)":"#818cf8",
-  "Others":"#94a3b8"
+  "Aesthetic (ความงาม)":"#e879f9", "General Clinic (คลินิกทั่วไป)":"#38bdf8", "Wellness / กายภาพ":"#4ade80",
+  "Dental (ทำฟัน)":"#fb923c", "Vet (รักษาสัตว์)":"#facc15", "Hair (ดูแลเส้นผม)":"#818cf8", "Others":"#94a3b8"
 };
 
 const PRIORITY_BADGE = {
@@ -218,6 +224,13 @@ const PRIORITY_BADGE = {
   "กลาง":{ bg:"#fef9c3", text:"#b45309" },
   "ต่ำ":{ bg:"#dcfce7", text:"#166534" }
 };
+
+const INITIAL_DATA = [
+  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Medical Aesthetics", source: "แคนวาส (Canvas)", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569", note: "รอหมอเซ็นเอกสาร" },
+  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aesthetics", source: "ลูกค้าเก่า", stage: "อยู่ระหว่างทดลอง Trial", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569", note: "ส่งลิงก์ทดลองใช้ให้ผู้ช่วยหมอแล้ว" },
+  { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "GP", source: "ออนไลน์", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569", note: "" },
+  { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "Wellness", source: "งานอีเว้นท์", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569", note: "ทักไปตอนโปรโมชั่น" }
+];
 
 const s = (style) => style;
 
@@ -235,19 +248,29 @@ function KPICard({ label, value, sub, color, icon }) {
   );
 }
 
-function Modal({ initialData, onSave, onClose, currentPeriod, t }) {
+function Modal({ initialData, onSave, onClose, currentPeriod, t, lang }) {
+  const td = (text) => lang === 'en' ? (dataDict[text] || text) : text;
+  
+  // จัดการ Type
   let initType = "Aesthetic (ความงาม)";
   let initCustomType = "";
   if (initialData) {
-    if (TYPES.slice(0, -1).includes(initialData.type)) {
-      initType = initialData.type;
-    } else {
-      initType = "Others";
-      initCustomType = initialData.type !== "Others" ? initialData.type : "";
-    }
+    if (TYPES.slice(0, -1).includes(initialData.type)) initType = initialData.type;
+    else { initType = "Others"; initCustomType = initialData.type !== "Others" ? initialData.type : ""; }
   }
 
-  const [form, setForm] = useState(initialData ? { ...initialData, type: initType, customType: initCustomType } : { name:"", type:"Aesthetic (ความงาม)", customType:"", package:"ไม่ระบุ", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod, note:"" });
+  // จัดการ Source
+  let initSource = "ไม่ระบุ";
+  let initCustomSource = "";
+  if (initialData) {
+    if (SOURCES.slice(0, -1).includes(initialData.source)) initSource = initialData.source;
+    else { initSource = "Others"; initCustomSource = initialData.source !== "Others" ? initialData.source : ""; }
+  }
+
+  const [form, setForm] = useState(initialData ? 
+    { ...initialData, type: initType, customType: initCustomType, source: initSource, customSource: initCustomSource } : 
+    { name:"", type:"Aesthetic (ความงาม)", customType:"", package:"ไม่ระบุ", source:"ไม่ระบุ", customSource:"", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod, note:"" }
+  );
   
   const handleChange = (k, v) => {
     setForm(f => {
@@ -256,6 +279,7 @@ function Modal({ initialData, onSave, onClose, currentPeriod, t }) {
         newForm.package = "ไม่ระบุ";
         if (v !== 'Others') newForm.customType = ""; 
       }
+      if (k === 'source' && v !== 'Others') newForm.customSource = "";
       if (k === 'stage' && v === 'ปิดดีลแล้ว') newForm.prob = 100;
       return newForm;
     });
@@ -270,6 +294,7 @@ function Modal({ initialData, onSave, onClose, currentPeriod, t }) {
         React.createElement("div", { style:{ color:"#f8fafc", fontWeight:700, fontSize:18, fontFamily:"'Space Grotesk',sans-serif" }}, isEditing ? t("modalEdit") : t("modalAdd")),
         React.createElement("button", { onClick:onClose, style:{ background:"none", border:"none", color:"#64748b", fontSize:20, cursor:"pointer" }}, "✕")
       ),
+      // ข้อมูลพื้นฐาน
       ...[
         { label: t("thName"), key:"name", type:"text" },
         { label: t("lblValue"), key:"value", type:"number" },
@@ -280,40 +305,65 @@ function Modal({ initialData, onSave, onClose, currentPeriod, t }) {
           React.createElement("input", { type, value:form[key], onChange:e=>handleChange(key,e.target.value), style:inputStyle })
         )
       ),
+      // ข้อมูลแบบ Dropdown 1
       ...[
         { label: t("lblMonth"), key:"month", opts: FORM_PERIODS },
         { label: t("lblType"), key:"type", opts:TYPES },
-        { label: t("lblPackage"), key:"package", opts: PACKAGE_MAP[form.type] || ALL_PACKAGES },
+      ].map(({ label, key, opts }) =>
+        React.createElement("div", { key, style:{ display:"flex", flexDirection:"column", gap:6 }},
+          React.createElement("label", { style:{ color:"#94a3b8", fontSize:12 }}, label),
+          React.createElement("select", { value:form[key], onChange:e=>handleChange(key,e.target.value), style:inputStyle },
+            ...opts.map(o => React.createElement("option", { key:o, value:o }, td(o)))
+          ),
+          (key === 'type' && form.type === 'Others') && React.createElement("input", {
+            type: "text", placeholder: t("plhCustomType"), value: form.customType, onChange: e => handleChange("customType", e.target.value),
+            style: { ...inputStyle, marginTop: 4, borderColor: "#60a5fa" }
+          })
+        )
+      ),
+      // แพ็กเกจ
+      React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:6 }},
+        React.createElement("label", { style:{ color:"#94a3b8", fontSize:12 }}, t("lblPackage")),
+        React.createElement("select", { value:form.package, onChange:e=>handleChange('package',e.target.value), style:inputStyle },
+          ...(PACKAGE_MAP[form.type] || ALL_PACKAGES).map(o => React.createElement("option", { key:o, value:o }, td(o)))
+        )
+      ),
+      // ที่มาของลูกค้า
+      React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:6 }},
+        React.createElement("label", { style:{ color:"#94a3b8", fontSize:12 }}, t("lblSource")),
+        React.createElement("select", { value:form.source, onChange:e=>handleChange('source',e.target.value), style:inputStyle },
+          ...SOURCES.map(o => React.createElement("option", { key:o, value:o }, td(o)))
+        ),
+        (form.source === 'Others') && React.createElement("input", {
+          type: "text", placeholder: t("plhCustomSource"), value: form.customSource, onChange: e => handleChange("customSource", e.target.value),
+          style: { ...inputStyle, marginTop: 4, borderColor: "#60a5fa" }
+        })
+      ),
+      // ข้อมูลแบบ Dropdown 2
+      ...[
         { label: t("lblStage"), key:"stage", opts:STAGES },
         { label: t("lblPriority"), key:"priority", opts:["สูง","กลาง","ต่ำ"] },
       ].map(({ label, key, opts }) =>
         React.createElement("div", { key, style:{ display:"flex", flexDirection:"column", gap:6 }},
           React.createElement("label", { style:{ color:"#94a3b8", fontSize:12 }}, label),
           React.createElement("select", { value:form[key], onChange:e=>handleChange(key,e.target.value), style:inputStyle },
-            ...opts.map(o => React.createElement("option", { key:o }, o))
-          ),
-          (key === 'type' && form.type === 'Others') && React.createElement("input", {
-            type: "text",
-            placeholder: t("plhCustomType"),
-            value: form.customType,
-            onChange: e => handleChange("customType", e.target.value),
-            style: { ...inputStyle, marginTop: 4, borderColor: "#60a5fa" }
-          })
+            ...opts.map(o => React.createElement("option", { key:o, value:o }, td(o)))
+          )
         )
       ),
+      // โน้ต
       React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:6 }},
         React.createElement("label", { style:{ color:"#94a3b8", fontSize:12 }}, t("lblNote")),
         React.createElement("textarea", { 
-          value:form.note || "", 
-          onChange:e=>handleChange("note",e.target.value), 
-          style:{...inputStyle, height: "60px", resize: "vertical"},
-          placeholder: t("plhNote") 
+          value:form.note || "", onChange:e=>handleChange("note",e.target.value), 
+          style:{...inputStyle, height: "60px", resize: "vertical"}, placeholder: t("plhNote") 
         })
       ),
       React.createElement("button", {
         onClick:() => { 
           const finalType = form.type === 'Others' && form.customType.trim() !== '' ? form.customType.trim() : form.type;
-          onSave({...form, type: finalType, id: form.id || Date.now(), value:Number(form.value)||0, prob:Number(form.prob)||0}); 
+          const finalSource = form.source === 'Others' && form.customSource.trim() !== '' ? form.customSource.trim() : form.source;
+          onSave({...form, type: finalType, source: finalSource, id: form.id || Date.now(), value:Number(form.value)||0, prob:Number(form.prob)||0}); 
         },
         style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:10, padding:12, color:"#fff", fontWeight:700, fontSize:15, cursor:"pointer", marginTop:4, flexShrink: 0 }
       }, isEditing ? t("btnUpdate") : t("btnSaveModal"))
@@ -322,8 +372,9 @@ function Modal({ initialData, onSave, onClose, currentPeriod, t }) {
 }
 
 function App() {
-  const [lang, setLang] = useState("th"); // State สำหรับเปลี่ยนภาษา
-  const t = (key) => dict[lang][key] || key; // ฟังก์ชันช่วยแปลภาษา
+  const [lang, setLang] = useState("th");
+  const t = (key) => dict[lang][key] || key;
+  const td = (text) => lang === 'en' ? (dataDict[text] || text) : text;
 
   const fileInputRef = useRef(null);
   const [data, setData] = useState(() => {
@@ -335,13 +386,18 @@ function App() {
           ...item,
           month: item.month || "พฤษภาคม 2569",
           package: item.package || "ไม่ระบุ",
+          source: item.source || "ไม่ระบุ", // กันเหนียวข้อมูลเก่า
           note: item.note || ""
         }));
       }
-      return INITIAL_DATA; 
-    } catch { return INITIAL_DATA; }
+      return []; 
+    } catch { return []; }
   });
   
+  useEffect(() => {
+    if(data.length === 0) { setData(INITIAL_DATA); }
+  }, []);
+
   const [selectedPeriod, setSelectedPeriod] = useState("พฤษภาคม 2569");
   const [showModal, setShowModal] = useState(false);
   const [editingData, setEditingData] = useState(null); 
@@ -382,44 +438,32 @@ function App() {
   const conversionRate = activeData.length > 0 ? Math.round((activeData.filter(d=>d.stage==="ปิดดีลแล้ว").length / activeData.length)*100) : 0;
 
   const typeData = TYPES.map(type => {
-    if (type === "Others") {
-      return { name: type, value: activeData.filter(d => !TYPES.slice(0, -1).includes(d.type)).length };
-    }
-    return { name: type, value: activeData.filter(d => d.type === type).length };
+    let count = type === "Others" 
+      ? activeData.filter(d => !TYPES.slice(0, -1).includes(d.type)).length
+      : activeData.filter(d => d.type === type).length;
+    return { name: td(type), rawName: type, value: count };
   }).filter(d => d.value > 0);
 
   const totalTypes = typeData.reduce((sum, d) => sum + d.value, 0);
 
   const stageValueData = STAGES.map(s => ({ 
-    name: s, 
-    value: activeData.filter(d=>d.stage===s).reduce((sum, item) => sum + item.value, 0), 
-    fill: STAGE_COLORS[s] 
+    name: td(s), rawName: s, value: activeData.filter(d=>d.stage===s).reduce((sum, item) => sum + item.value, 0), fill: STAGE_COLORS[s] 
   }));
 
   const handleSaveClinic = (clinicData) => {
-    let newData;
-    if (editingData) {
-      newData = data.map(d => d.id === clinicData.id ? clinicData : d);
-    } else {
-      newData = [...data, clinicData];
-    }
-    setData(newData);
-    save(newData);
-    setShowModal(false);
-    setEditingData(null);
+    let newData = editingData ? data.map(d => d.id === clinicData.id ? clinicData : d) : [...data, clinicData];
+    setData(newData); save(newData); setShowModal(false); setEditingData(null);
   };
 
   const updateStage = (id, stage) => {
     const newData = data.map(d => d.id===id ? {...d,stage, prob: stage === "ปิดดีลแล้ว" ? 100 : d.prob} : d);
-    setData(newData);
-    save(newData);
+    setData(newData); save(newData);
   };
   
   const deleteClinic = (id) => { 
     if(confirm(t("confirmDelete"))) {
       const newData = data.filter(d=>d.id!==id);
-      setData(newData);
-      save(newData);
+      setData(newData); save(newData);
     }
   };
 
@@ -438,14 +482,8 @@ function App() {
       reader.onload = (e) => {
         try {
           const importedData = JSON.parse(e.target.result);
-          if (Array.isArray(importedData)) {
-            setData(importedData);
-            save(importedData);
-            alert(t("importSuccess"));
-          }
-        } catch (err) {
-          alert(t("importFail"));
-        }
+          if (Array.isArray(importedData)) { setData(importedData); save(importedData); alert(t("importSuccess")); }
+        } catch (err) { alert(t("importFail")); }
         event.target.value = null; 
       };
       reader.readAsText(file);
@@ -459,11 +497,10 @@ function App() {
   const defaultModalMonth = FORM_PERIODS.includes(selectedPeriod) ? selectedPeriod : "พฤษภาคม 2569";
 
   return React.createElement("div", { style:{ background:"#020617", minHeight:"100vh", padding:"24px 28px" }},
-    showModal && React.createElement(Modal, { initialData: editingData, onSave: handleSaveClinic, onClose:()=> { setShowModal(false); setEditingData(null); }, currentPeriod: defaultModalMonth, t: t }),
-    
+    showModal && React.createElement(Modal, { initialData: editingData, onSave: handleSaveClinic, onClose:()=> { setShowModal(false); setEditingData(null); }, currentPeriod: defaultModalMonth, t: t, lang: lang }),
     React.createElement("input", { type:"file", accept:".json", ref: fileInputRef, style:{ display:"none" }, onChange: importData }),
 
-    // Header Area
+    // Header 
     React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }},
       React.createElement("div", null,
         React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:10, marginBottom:4 }},
@@ -472,86 +509,55 @@ function App() {
             t("appTitle")
           ),
           React.createElement("select", { 
-            value: selectedPeriod, 
-            onChange: e => { setSelectedPeriod(e.target.value); setSearchQuery(""); }, 
+            value: selectedPeriod, onChange: e => { setSelectedPeriod(e.target.value); setSearchQuery(""); }, 
             style: { marginLeft: 15, background:"#1e293b", border:"1px solid #6366f1", borderRadius:8, padding:"6px 12px", color:"#f8fafc", fontSize:16, outline:"none", cursor:"pointer", fontWeight:700 }
           },
-            ...DISPLAY_PERIODS.map(p => React.createElement("option", { key:p }, p))
+            ...DISPLAY_PERIODS.map(p => React.createElement("option", { key:p, value:p }, td(p)))
           )
         ),
         React.createElement("div", { style:{ color:"#475569", fontSize:13, marginLeft:18 }}, t("subtitle"))
       ),
-      React.createElement("div", { style:{ display:"flex", gap:10, alignItems:"center" }},
-        // Toggle เปลี่ยนภาษา
-        React.createElement("div", { style: { display: "flex", background: "#1e293b", borderRadius: 12, overflow: "hidden", border: "1px solid #334155", marginRight: 10 } },
-          React.createElement("button", { onClick: () => setLang("th"), style:{ background: lang==="th"?"#334155":"transparent", border:"none", padding:"8px 12px", color:lang==="th"?"#fff":"#64748b", fontWeight:700, fontSize:12, cursor:"pointer", transition:"0.2s" } }, "🇹🇭 TH"),
-          React.createElement("button", { onClick: () => setLang("en"), style:{ background: lang==="en"?"#334155":"transparent", border:"none", padding:"8px 12px", color:lang==="en"?"#fff":"#64748b", fontWeight:700, fontSize:12, cursor:"pointer", transition:"0.2s" } }, "🇬🇧 EN")
+      React.createElement("div", { style:{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:12 }},
+        React.createElement("div", { style: { display: "flex", background: "#0f172a", borderRadius: 20, padding: "4px", border: "1px solid #334155" } },
+          React.createElement("button", { onClick: () => setLang("th"), style:{ background: lang==="th"?"#3b82f6":"transparent", borderRadius: 16, border:"none", padding:"4px 12px", color:lang==="th"?"#fff":"#64748b", fontWeight:700, fontSize:12, cursor:"pointer", transition:"0.2s" } }, "🇹🇭 TH"),
+          React.createElement("button", { onClick: () => setLang("en"), style:{ background: lang==="en"?"#3b82f6":"transparent", borderRadius: 16, border:"none", padding:"4px 12px", color:lang==="en"?"#fff":"#64748b", fontWeight:700, fontSize:12, cursor:"pointer", transition:"0.2s" } }, "🇬🇧 EN")
         ),
-        // ปุ่ม Export / Import
-        React.createElement("div", { style: { display: "flex", gap: 5, marginRight: 10, borderRight: "1px solid #334155", paddingRight: 15 } },
+        React.createElement("div", { style:{ display:"flex", gap:10, flexWrap:"wrap", justifyContent:"flex-end" }},
            React.createElement("button", { onClick: exportData, style:{ background:"#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 14px", color:"#94a3b8", fontWeight:600, fontSize:13, cursor:"pointer" } }, t("exportBtn")),
-          React.createElement("button", { onClick: () => fileInputRef.current.click(), style:{ background:"#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 14px", color:"#94a3b8", fontWeight:600, fontSize:13, cursor:"pointer" } }, t("importBtn"))
-        ),
-        React.createElement("button", { onClick:()=>save(), style:{ background: saved ? "#10b981" : "#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 18px", color:"#f8fafc", fontWeight:700, fontSize:14, cursor:"pointer" }}, saved ? t("savedBtn") : t("saveBtn")),
-        React.createElement("button", { onClick:openAddModal, style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:12, padding:"10px 20px", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer", boxShadow:"0 4px 20px #6366f144" }}, t("addBtn"))
+          React.createElement("button", { onClick: () => fileInputRef.current.click(), style:{ background:"#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 14px", color:"#94a3b8", fontWeight:600, fontSize:13, cursor:"pointer" } }, t("importBtn")),
+          React.createElement("div", { style: { width: "1px", background: "#334155", margin: "0 5px" } }), 
+          React.createElement("button", { onClick:()=>save(), style:{ background: saved ? "#10b981" : "#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 18px", color:"#f8fafc", fontWeight:700, fontSize:14, cursor:"pointer", transition:"0.3s" }}, saved ? t("savedBtn") : t("saveBtn")),
+          React.createElement("button", { onClick:openAddModal, style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:12, padding:"10px 20px", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer", boxShadow:"0 4px 20px #6366f144" }}, t("addBtn"))
+        )
       )
     ),
 
     // KPI Cards
     React.createElement("div", { style:{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }},
-      React.createElement(KPICard, { 
-        label: selectedPeriod === "🏆 รายการที่ปิดดีลได้ (Closed Won)" ? t("kpiWonTitle") : t("kpiLead"), 
-        value: activeData.length, 
-        sub: t("kpiLeadSub").replace("{count}", filtered.length), 
-        color: "#6366f1", icon: "🏥" 
-      }),
-      React.createElement(KPICard, { 
-        label: t("kpiPipe"), 
-        value: `฿${Math.round(weightedPipeline/1000)}K`, 
-        sub: t("kpiPipeSub"), color: "#e879f9", icon: "💰" 
-      }),
-      React.createElement(KPICard, { 
-        label: t("kpiClosed"), 
-        value: `฿${Math.round(closedOnlyValue/1000)}K`, 
-        sub: t("kpiClosedSub"), color: "#10b981", icon: "🏆" 
-      }),
-      React.createElement(KPICard, { 
-        label: t("kpiConv"), 
-        value: `${conversionRate}%`, 
-        sub: t("kpiConvSub"), color: "#f59e0b", icon: "📈" 
-      })
+      React.createElement(KPICard, { label: selectedPeriod === "🏆 รายการที่ปิดดีลได้ (Closed Won)" ? t("kpiWonTitle") : t("kpiLead"), value: activeData.length, sub: t("kpiLeadSub").replace("{count}", filtered.length), color: "#6366f1", icon: "🏥" }),
+      React.createElement(KPICard, { label: t("kpiPipe"), value: `฿${Math.round(weightedPipeline/1000)}K`, sub: t("kpiPipeSub"), color: "#e879f9", icon: "💰" }),
+      React.createElement(KPICard, { label: t("kpiClosed"), value: `฿${Math.round(closedOnlyValue/1000)}K`, sub: t("kpiClosedSub"), color: "#10b981", icon: "🏆" }),
+      React.createElement(KPICard, { label: t("kpiConv"), value: `${conversionRate}%`, sub: t("kpiConvSub"), color: "#f59e0b", icon: "📈" })
     ),
 
     // Charts
     React.createElement("div", { style:{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16, marginBottom:24 }},
-      // Pie
       React.createElement("div", { style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:16, padding:20 }},
         React.createElement("div", { style:{ fontWeight:700, fontSize:14, marginBottom:16, color:"#e2e8f0" }}, t("chartPieTitle")),
         React.createElement(ResponsiveContainer, { width:"100%", height:180 },
           React.createElement(PieChart, null,
             React.createElement(Pie, { data:typeData, cx:"50%", cy:"50%", innerRadius:45, outerRadius:75, paddingAngle:3, dataKey:"value" },
-              ...typeData.map(entry => React.createElement(Cell, { key:entry.name, fill:TYPE_COLORS[entry.name]||"#94a3b8" }))
+              ...typeData.map(entry => React.createElement(Cell, { key:entry.name, fill:TYPE_COLORS[entry.rawName]||"#94a3b8" }))
             ),
-            React.createElement(Tooltip, { 
-              formatter: (value, name) => {
-                const pct = totalTypes > 0 ? Math.round((value / totalTypes) * 100) : 0;
-                return [`${value} (${pct}%)`, name];
-              },
-              contentStyle:{ background:"#1e293b", border:"1px solid #334155", borderRadius:8, color:"#f8fafc", fontSize:12 }
-            })
+            React.createElement(Tooltip, { formatter: (value, name) => [`${value} (${totalTypes>0?Math.round((value/totalTypes)*100):0}%)`, name], contentStyle:{ background:"#1e293b", border:"1px solid #334155", borderRadius:8, color:"#f8fafc", fontSize:12 } })
           )
         ),
         React.createElement("div", { style:{ display:"flex", flexWrap:"wrap", gap:8, marginTop:8 }},
-          ...typeData.map(d => {
-            const pct = totalTypes > 0 ? Math.round((d.value / totalTypes) * 100) : 0;
-            return React.createElement("div", { key:d.name, style:{ display:"flex", alignItems:"center", gap:5, fontSize:11, color:"#94a3b8" }},
-              React.createElement("div", { style:{ width:8, height:8, borderRadius:"50%", background:TYPE_COLORS[d.name]||"#94a3b8" }}),
-              `${d.name} ${pct}% (${d.value})`
-            )
-          })
+          ...typeData.map(d => React.createElement("div", { key:d.name, style:{ display:"flex", alignItems:"center", gap:5, fontSize:11, color:"#94a3b8" }},
+            React.createElement("div", { style:{ width:8, height:8, borderRadius:"50%", background:TYPE_COLORS[d.rawName]||"#94a3b8" }}), `${d.name} ${totalTypes>0?Math.round((d.value/totalTypes)*100):0}% (${d.value})`
+          ))
         )
       ),
-      // Bar
       React.createElement("div", { style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:16, padding:20 }},
         React.createElement("div", { style:{ fontWeight:700, fontSize:14, marginBottom:16, color:"#e2e8f0" }}, t("chartBarTitle")),
         React.createElement(ResponsiveContainer, { width:"100%", height:210 },
@@ -559,13 +565,10 @@ function App() {
             React.createElement(XAxis, { type:"number", tickFormatter: (val) => `฿${val/1000}k`, tick:{ fill:"#475569", fontSize:10 }}),
             React.createElement(YAxis, { type:"category", dataKey:"name", tick:{ fill:"#94a3b8", fontSize:10 }, width:90 }),
             React.createElement(Tooltip, { formatter: (v) => `฿${v.toLocaleString()}`, contentStyle:{ background:"#1e293b", border:"1px solid #334155", borderRadius:8, color:"#f8fafc", fontSize:12 }}),
-            React.createElement(Bar, { dataKey:"value", radius:[0,6,6,0] },
-              ...stageValueData.map(entry => React.createElement(Cell, { key:entry.name, fill:entry.fill }))
-            )
+            React.createElement(Bar, { dataKey:"value", radius:[0,6,6,0] }, ...stageValueData.map(entry => React.createElement(Cell, { key:entry.name, fill:entry.fill })))
           )
         )
       ),
-      // Funnel
       React.createElement("div", { style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:16, padding:20 }},
         React.createElement("div", { style:{ fontWeight:700, fontSize:14, marginBottom:16, color:"#e2e8f0" }}, t("chartFunnelTitle")),
         React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:8 }},
@@ -574,7 +577,7 @@ function App() {
             const maxCount = Math.max(...STAGES.map(st=>activeData.filter(d=>d.stage===st).length),1);
             const pct = count===0 ? 0 : Math.max((count/maxCount)*100,12);
             return React.createElement("div", { key:s, style:{ display:"flex", alignItems:"center", gap:8 }},
-              React.createElement("div", { style:{ width:85, fontSize:10, color:"#64748b", textAlign:"right", flexShrink:0 }}, s),
+              React.createElement("div", { style:{ width:85, fontSize:10, color:"#64748b", textAlign:"right", flexShrink:0 }}, td(s)),
               React.createElement("div", { style:{ flex:1, background:"#1e293b", borderRadius:6, height:22 }},
                 React.createElement("div", { style:{ width:`${pct}%`, background:STAGE_COLORS[s], borderRadius:6, height:"100%", display:"flex", alignItems:"center", justifyContent:"center", minWidth:count>0?20:0, transition:"width 0.5s" }},
                   count>0 && React.createElement("span", { style:{ color:"#fff", fontSize:10, fontWeight:700 }}, count)
@@ -593,22 +596,15 @@ function App() {
           selectedPeriod === "🏆 รายการที่ปิดดีลได้ (Closed Won)" ? t("tableTitleWon") : t("tableTitleActive")
         ),
         React.createElement("div", { style:{ display:"flex", gap:10, alignItems: "center" }},
-          React.createElement("input", { 
-            type: "text", 
-            placeholder: t("searchPlaceholder"), 
-            value: searchQuery, 
-            onChange: e => setSearchQuery(e.target.value), 
-            style: { ...selectStyle, padding: "8px 12px", width: "220px", color: "#f8fafc" } 
-          }),
+          React.createElement("input", { type: "text", placeholder: t("searchPlaceholder"), value: searchQuery, onChange: e => setSearchQuery(e.target.value), style: { ...selectStyle, padding: "8px 12px", width: "200px", color: "#f8fafc" } }),
           React.createElement("div", { style: { width: "1px", height: "20px", background: "#334155", margin: "0 5px" } }), 
-          
           React.createElement("select", { value:filterType, onChange:e=>setFilterType(e.target.value), style:selectStyle },
             React.createElement("option", { value: "ทั้งหมด" }, t("filterType")),
-            ...TYPES.map(t => React.createElement("option", { key:t, value: t }, t))
+            ...TYPES.map(type => React.createElement("option", { key:type, value: type }, td(type)))
           ),
           React.createElement("select", { value:filterStage, onChange:e=>setFilterStage(e.target.value), style:selectStyle },
             React.createElement("option", { value: "ทั้งหมด" }, t("filterStage")),
-            ...STAGES.map(s => React.createElement("option", { key:s, value: s }, s))
+            ...STAGES.map(s => React.createElement("option", { key:s, value: s }, td(s)))
           )
         )
       ),
@@ -617,32 +613,44 @@ function App() {
         React.createElement("table", null,
           React.createElement("thead", null,
             React.createElement("tr", { style:{ borderBottom:"1px solid #1e293b" }},
-              ...[t("thName"), t("thMonth"), t("thType"), t("thPackage"), t("thValue"), t("thStage"), t("thNote"), t("thAction")].map((h, i) =>
-                React.createElement("th", { key:h, style:{ padding:"8px 12px", textAlign:"left", color:"#475569", fontWeight:600, fontSize:11, width: i===6 ? "20%" : "auto" }}, h)
+              ...[t("thName"), t("thMonth"), t("thType"), t("thPackage"), t("thSource"), t("thValue"), t("thStage"), t("thNote"), t("thAction")].map((h, i) =>
+                React.createElement("th", { key:h, style:{ padding:"8px 10px", textAlign:"left", color:"#475569", fontWeight:600, fontSize:11, width: i===7 ? "15%" : "auto" }}, h)
               )
             )
           ),
           React.createElement("tbody", null,
             ...filtered.map((d,i) => {
-              const pri = PRIORITY_BADGE[d.priority] || PRIORITY_BADGE["กลาง"];
+              const priBg = PRIORITY_BADGE[d.priority]?.bg || "#1e293b";
+              const priText = PRIORITY_BADGE[d.priority]?.text || "#94a3b8";
               const isClosed = d.stage === "ปิดดีลแล้ว";
-              const typeColor = TYPE_COLORS[d.type] || "#94a3b8"; 
+              
+              const isStandardType = TYPES.slice(0, -1).includes(d.type);
+              const displayType = isStandardType ? td(d.type) : d.type;
+              const typeColor = isStandardType ? TYPE_COLORS[d.type] : "#94a3b8"; 
+              
+              const isStandardSource = SOURCES.slice(0, -1).includes(d.source);
+              const displaySource = isStandardSource ? td(d.source) : (d.source || "-");
+
+              const displayMonth = d.month ? td(d.month).split(" ")[0] : "-";
               
               return React.createElement("tr", { key:d.id, style:{ borderBottom:"1px solid #0f172a", background: i%2===0 ? "#0a1628":"transparent" }},
-                React.createElement("td", { style:{ padding:"10px 12px" }}, 
+                React.createElement("td", { style:{ padding:"10px 10px" }}, 
                   React.createElement("div", { style:{ color:"#e2e8f0", fontWeight:700, marginBottom:4 }}, d.name),
-                  React.createElement("span", { style:{ background:pri.bg, color:pri.text, padding:"2px 6px", borderRadius:10, fontSize:10, fontWeight:600 }}, `Priority: ${d.priority}`)
+                  React.createElement("span", { style:{ background:priBg, color:priText, padding:"2px 6px", borderRadius:10, fontSize:10, fontWeight:600 }}, `Priority: ${td(d.priority)}`)
                 ),
-                React.createElement("td", { style:{ padding:"10px 12px", color:"#64748b", fontSize: 12 }}, d.month ? d.month.split(" ")[0] : "-"),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("span", { style:{ background:`${typeColor}22`, color:typeColor, padding:"3px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.type)
+                React.createElement("td", { style:{ padding:"10px 10px", color:"#64748b", fontSize: 12 }}, displayMonth),
+                React.createElement("td", { style:{ padding:"10px 10px" }},
+                  React.createElement("span", { style:{ background:`${typeColor}22`, color:typeColor, padding:"3px 8px", borderRadius:20, fontSize:11, fontWeight:600, display:"inline-block" }}, displayType)
                 ),
-                React.createElement("td", { style:{ padding:"10px 12px", color:"#94a3b8", fontSize: 12 }}, d.package || "ไม่ระบุ"),
-                React.createElement("td", { style:{ padding:"10px 12px", color: isClosed ? "#10b981" : "#e2e8f0", fontWeight: isClosed ? 700 : 400 }}, d.value ? `฿${d.value.toLocaleString()}` : "-"),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
+                React.createElement("td", { style:{ padding:"10px 10px", color:"#94a3b8", fontSize: 12 }}, td(d.package) || "-"),
+                React.createElement("td", { style:{ padding:"10px 10px" }},
+                   React.createElement("span", { style:{ background:"#33415544", color:"#cbd5e1", padding:"3px 8px", borderRadius:4, fontSize:11, border:"1px solid #334155" }}, displaySource)
+                ),
+                React.createElement("td", { style:{ padding:"10px 10px", color: isClosed ? "#10b981" : "#e2e8f0", fontWeight: isClosed ? 700 : 400 }}, d.value ? `฿${d.value.toLocaleString()}` : "-"),
+                React.createElement("td", { style:{ padding:"10px 10px" }},
                   React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:6 }},
-                    React.createElement("select", { value:d.stage, onChange:e=>updateStage(d.id,e.target.value), style:{ background:"#1e293b", border:`1px solid ${STAGE_COLORS[d.stage]}55`, borderRadius:6, padding:"4px 8px", color:STAGE_COLORS[d.stage], fontSize:11, outline:"none", cursor:"pointer", fontWeight:600 }},
-                      ...STAGES.map(s => React.createElement("option", { key:s, value: s }, s))
+                    React.createElement("select", { value:d.stage, onChange:e=>updateStage(d.id,e.target.value), style:{ background:"#1e293b", border:`1px solid ${STAGE_COLORS[d.stage]}55`, borderRadius:6, padding:"4px 6px", color:STAGE_COLORS[d.stage], fontSize:11, outline:"none", cursor:"pointer", fontWeight:600 }},
+                      ...STAGES.map(s => React.createElement("option", { key:s, value: s }, td(s)))
                     ),
                     React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:6 }},
                       React.createElement("div", { style:{ width:40, height:4, background:"#1e293b", borderRadius:2, overflow:"hidden" }},
@@ -652,12 +660,12 @@ function App() {
                     )
                   )
                 ),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  d.note ? React.createElement("div", { style:{ color:"#94a3b8", fontSize:12, background:"#1e293b", padding:"6px 10px", borderRadius:6, lineHeight:1.4 }}, d.note)
-                         : React.createElement("div", { style:{ color:"#475569", fontSize:12, fontStyle:"italic" }}, "-")
+                React.createElement("td", { style:{ padding:"10px 10px" }},
+                  d.note ? React.createElement("div", { style:{ color:"#94a3b8", fontSize:11, background:"#1e293b", padding:"6px", borderRadius:6, lineHeight:1.4 }}, d.note)
+                         : React.createElement("div", { style:{ color:"#475569", fontSize:11, fontStyle:"italic" }}, "-")
                 ),
-                React.createElement("td", { style:{ padding:"10px 12px" }},
-                  React.createElement("div", { style:{ display:"flex", gap: 10 }},
+                React.createElement("td", { style:{ padding:"10px 10px" }},
+                  React.createElement("div", { style:{ display:"flex", gap: 6 }},
                     React.createElement("button", { onClick:()=>openEditModal(d), style:{ background:"#3b82f622", border:"none", color:"#60a5fa", padding:"6px", borderRadius:6, cursor:"pointer", fontSize:12 }}, "✏️"),
                     React.createElement("button", { onClick:()=>deleteClinic(d.id), style:{ background:"#ef444422", border:"none", color:"#ef4444", padding:"6px", borderRadius:6, cursor:"pointer", fontSize:12 }}, "🗑️")
                   )
@@ -665,7 +673,7 @@ function App() {
               );
             }),
             filtered.length===0 && React.createElement("tr", null,
-              React.createElement("td", { colSpan:8, style:{ textAlign:"center", padding:32, color:"#475569" }}, t("noData"))
+              React.createElement("td", { colSpan:9, style:{ textAlign:"center", padding:32, color:"#475569" }}, t("noData"))
             )
           )
         )
