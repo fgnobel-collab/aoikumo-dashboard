@@ -25,12 +25,18 @@
 const { useState, useEffect } = React;
 const { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
 
+const PERIODS = [
+  "มกราคม 2569", "กุมภาพันธ์ 2569", "มีนาคม 2569", "เมษายน 2569",
+  "พฤษภาคม 2569", "มิถุนายน 2569", "กรกฎาคม 2569", "สิงหาคม 2569",
+  "กันยายน 2569", "ตุลาคม 2569", "พฤศจิกายน 2569", "ธันวาคม 2569"
+];
+
 const INITIAL_DATA = [
-  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง" },
-  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic", stage: "Demo แล้ว", value: 36000, prob: 60, priority: "สูง" },
-  { id: 3, name: "คลินิก A", type: "General Clinic", stage: "Interested", value: 24000, prob: 30, priority: "กลาง" },
-  { id: 4, name: "คลินิก B", type: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ" },
-  { id: 5, name: "คลินิก C", type: "Aesthetic", stage: "Follow Up", value: 36000, prob: 40, priority: "กลาง" },
+  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569" },
+  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic", stage: "Demo แล้ว", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569" },
+  { id: 3, name: "คลินิก A", type: "General Clinic", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569" },
+  { id: 4, name: "คลินิก B", type: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569" },
+  { id: 5, name: "คลินิก C", type: "Aesthetic", stage: "Follow Up", value: 36000, prob: 40, priority: "กลาง", month: "พฤษภาคม 2569" },
 ];
 
 const STAGES = ["Prospect","Interested","Follow Up","นัด Demo","Demo แล้ว","รอเซ็นสัญญา","ปิดดีลแล้ว","ไม่สนใจ"];
@@ -67,8 +73,8 @@ function KPICard({ label, value, sub, color, icon }) {
   );
 }
 
-function Modal({ onAdd, onClose }) {
-  const [form, setForm] = useState({ name:"", type:"Aesthetic", stage:"Prospect", value:"", prob:0, priority:"กลาง" });
+function Modal({ onAdd, onClose, currentPeriod }) {
+  const [form, setForm] = useState({ name:"", type:"Aesthetic", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod });
   const set = (k,v) => setForm(f => ({...f,[k]:v}));
   const inputStyle = { background:"#1e293b", border:"1px solid #334155", borderRadius:8, padding:"8px 12px", color:"#f8fafc", fontSize:14, outline:"none", width:"100%" };
 
@@ -89,6 +95,7 @@ function Modal({ onAdd, onClose }) {
         )
       ),
       ...[
+        { label:"ประจำเดือน", key:"month", opts: PERIODS },
         { label:"ประเภท", key:"type", opts:TYPES },
         { label:"Stage", key:"stage", opts:STAGES },
         { label:"Priority", key:"priority", opts:["สูง","กลาง","ต่ำ"] },
@@ -110,8 +117,18 @@ function Modal({ onAdd, onClose }) {
 
 function App() {
   const [data, setData] = useState(() => {
-    try { const s = localStorage.getItem("pipeline"); return s ? JSON.parse(s) : INITIAL_DATA; } catch { return INITIAL_DATA; }
+    try { 
+      const s = localStorage.getItem("pipeline"); 
+      if(s) {
+        let parsed = JSON.parse(s);
+        // เติมเดือนให้ข้อมูลเก่าที่ยังไม่มีเดือน เพื่อป้องกันข้อมูลหาย
+        return parsed.map(item => item.month ? item : { ...item, month: "พฤษภาคม 2569" });
+      }
+      return INITIAL_DATA; 
+    } catch { return INITIAL_DATA; }
   });
+  
+  const [selectedPeriod, setSelectedPeriod] = useState("พฤษภาคม 2569");
   const [showModal, setShowModal] = useState(false);
   const [filterType, setFilterType] = useState("ทั้งหมด");
   const [filterStage, setFilterStage] = useState("ทั้งหมด");
@@ -123,17 +140,20 @@ function App() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const filtered = data.filter(d =>
+  // ดึงข้อมูลเฉพาะเดือนที่เลือกมาคำนวณ
+  const activeData = data.filter(d => d.month === selectedPeriod);
+
+  const filtered = activeData.filter(d =>
     (filterType === "ทั้งหมด" || d.type === filterType) &&
     (filterStage === "ทั้งหมด" || d.stage === filterStage)
   );
 
-  const weightedPipeline = data.reduce((s,d) => s + (d.value * d.prob / 100), 0);
-  const closedValue = data.filter(d => ["ปิดดีลแล้ว","รอเซ็นสัญญา"].includes(d.stage)).reduce((s,d) => s+d.value, 0);
-  const conversionRate = data.length > 0 ? Math.round((data.filter(d=>d.stage==="ปิดดีลแล้ว").length / data.length)*100) : 0;
+  const weightedPipeline = activeData.reduce((s,d) => s + (d.value * d.prob / 100), 0);
+  const closedValue = activeData.filter(d => ["ปิดดีลแล้ว","รอเซ็นสัญญา"].includes(d.stage)).reduce((s,d) => s+d.value, 0);
+  const conversionRate = activeData.length > 0 ? Math.round((activeData.filter(d=>d.stage==="ปิดดีลแล้ว").length / activeData.length)*100) : 0;
 
-  const typeData = TYPES.map(t => ({ name:t, value:data.filter(d=>d.type===t).length })).filter(d=>d.value>0);
-  const stageData = STAGES.map(s => ({ name:s, value:data.filter(d=>d.stage===s).length, fill:STAGE_COLORS[s] }));
+  const typeData = TYPES.map(t => ({ name:t, value:activeData.filter(d=>d.type===t).length })).filter(d=>d.value>0);
+  const stageData = STAGES.map(s => ({ name:s, value:activeData.filter(d=>d.stage===s).length, fill:STAGE_COLORS[s] }));
 
   const addClinic = (c) => setData(p => [...p, c]);
   const updateStage = (id, stage) => setData(p => p.map(d => d.id===id ? {...d,stage} : d));
@@ -142,7 +162,7 @@ function App() {
   const selectStyle = { background:"#1e293b", border:"1px solid #334155", borderRadius:8, padding:"6px 10px", color:"#94a3b8", fontSize:12, outline:"none" };
 
   return React.createElement("div", { style:{ background:"#020617", minHeight:"100vh", padding:"24px 28px" }},
-    showModal && React.createElement(Modal, { onAdd:addClinic, onClose:()=>setShowModal(false) }),
+    showModal && React.createElement(Modal, { onAdd:addClinic, onClose:()=>setShowModal(false), currentPeriod:selectedPeriod }),
 
     // Header
     React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }},
@@ -151,9 +171,16 @@ function App() {
           React.createElement("div", { style:{ width:8, height:32, background:"linear-gradient(180deg,#6366f1,#e879f9)", borderRadius:4 }}),
           React.createElement("h1", { style:{ margin:0, fontSize:26, fontWeight:800, fontFamily:"'Space Grotesk',sans-serif", background:"linear-gradient(135deg,#e2e8f0,#94a3b8)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }},
             "Aoikumo Sales Dashboard"
+          ),
+          React.createElement("select", { 
+            value: selectedPeriod, 
+            onChange: e => setSelectedPeriod(e.target.value), 
+            style: { marginLeft: 15, background:"#1e293b", border:"1px solid #6366f1", borderRadius:8, padding:"6px 12px", color:"#f8fafc", fontSize:16, outline:"none", cursor:"pointer", fontWeight:700 }
+          },
+            ...PERIODS.map(p => React.createElement("option", { key:p }, p))
           )
         ),
-        React.createElement("div", { style:{ color:"#475569", fontSize:13, marginLeft:18 }}, "พฤษภาคม 2568 • ข้อมูลบันทึกในเครื่อง")
+        React.createElement("div", { style:{ color:"#475569", fontSize:13, marginLeft:18 }}, "ข้อมูลบันทึกในเครื่อง (สลับเดือนเพื่อดูข้อมูลแยกกันได้)")
       ),
       React.createElement("div", { style:{ display:"flex", gap:10 }},
         React.createElement("button", { onClick:save, style:{ background: saved ? "#10b981" : "#1e293b", border:"1px solid #334155", borderRadius:12, padding:"10px 18px", color:"#f8fafc", fontWeight:700, fontSize:14, cursor:"pointer" }},
@@ -167,7 +194,7 @@ function App() {
 
     // KPI Cards
     React.createElement("div", { style:{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }},
-      React.createElement(KPICard, { label:"Lead ทั้งหมด", value:data.length, sub:`Filtered: ${filtered.length} เจ้า`, color:"#6366f1", icon:"🏥" }),
+      React.createElement(KPICard, { label:"Lead ทั้งหมด", value:activeData.length, sub:`Filtered: ${filtered.length} เจ้า`, color:"#6366f1", icon:"🏥" }),
       React.createElement(KPICard, { label:"Pipeline (Weighted)", value:`฿${Math.round(weightedPipeline/1000)}K`, sub:"คำนวณจากโอกาสปิด", color:"#e879f9", icon:"💰" }),
       React.createElement(KPICard, { label:"มูลค่าที่ปิดได้", value:`฿${Math.round(closedValue/1000)}K`, sub:"รวมรอเซ็นสัญญา", color:"#10b981", icon:"✅" }),
       React.createElement(KPICard, { label:"Conversion Rate", value:`${conversionRate}%`, sub:"ปิดได้ / ทั้งหมด", color:"#f59e0b", icon:"📈" })
@@ -215,8 +242,8 @@ function App() {
         React.createElement("div", { style:{ fontWeight:700, fontSize:14, marginBottom:16, color:"#e2e8f0" }}, "🔽 Sales Funnel"),
         React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:8 }},
           ...STAGES.map(s => {
-            const count = data.filter(d=>d.stage===s).length;
-            const maxCount = Math.max(...STAGES.map(st=>data.filter(d=>d.stage===st).length),1);
+            const count = activeData.filter(d=>d.stage===s).length;
+            const maxCount = Math.max(...STAGES.map(st=>activeData.filter(d=>d.stage===st).length),1);
             const pct = count===0 ? 0 : Math.max((count/maxCount)*100,12);
             return React.createElement("div", { key:s, style:{ display:"flex", alignItems:"center", gap:8 }},
               React.createElement("div", { style:{ width:85, fontSize:10, color:"#64748b", textAlign:"right", flexShrink:0 }}, s),
@@ -289,7 +316,7 @@ function App() {
               );
             }),
             filtered.length===0 && React.createElement("tr", null,
-              React.createElement("td", { colSpan:8, style:{ textAlign:"center", padding:32, color:"#475569" }}, "ไม่พบ lead ที่ตรงกับ filter")
+              React.createElement("td", { colSpan:8, style:{ textAlign:"center", padding:32, color:"#475569" }}, "ไม่พบข้อมูลของเดือนนี้")
             )
           )
         )
