@@ -17,6 +17,11 @@
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
     table { border-collapse: collapse; width: 100%; }
+    
+    /* เพิ่มสไตล์สำหรับ Scrollbar ในกล่อง Modal ให้ดูสวยงาม */
+    .modal-scroll::-webkit-scrollbar { width: 6px; }
+    .modal-scroll::-webkit-scrollbar-track { background: #1e293b; border-radius: 8px; }
+    .modal-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -31,15 +36,6 @@ const PERIODS = [
   "กันยายน 2569", "ตุลาคม 2569", "พฤศจิกายน 2569", "ธันวาคม 2569"
 ];
 
-const PACKAGES = [
-  "ไม่ระบุ",
-  "Aoikumo: Grow", "Aoikumo: Aesthetics", "Aoikumo: Medical Aesthetics",
-  "Hair: Hair", "Hair: Hair PLUS",
-  "kumoDoc: GP", "kumoDoc: GP +", "kumoDoc: Wellness",
-  "kumoVet: kumoVet", "kumoVet: kumoVet GROOM", "kumoVet: kumoVet PLUS",
-  "kumoDent: Dental Lite", "kumoDent: Dental", "kumoDent: Dental +"
-];
-
 const TYPES = [
   "Aesthetic (ความงาม)",
   "General Clinic (คลินิกทั่วไป)",
@@ -50,12 +46,23 @@ const TYPES = [
   "Others"
 ];
 
+// จัดกลุ่ม Package ตามประเภทคลินิก
+const PACKAGE_MAP = {
+  "Aesthetic (ความงาม)": ["ไม่ระบุ", "Grow", "Aesthetics", "Medical Aesthetics"],
+  "General Clinic (คลินิกทั่วไป)": ["ไม่ระบุ", "GP", "GP +"],
+  "Wellness / กายภาพ": ["ไม่ระบุ", "Wellness"],
+  "Dental (ทำฟัน)": ["ไม่ระบุ", "Dental Lite", "Dental", "Dental +"],
+  "Vet (รักษาสัตว์)": ["ไม่ระบุ", "kumoVet", "kumoVet GROOM", "kumoVet PLUS"],
+  "Hair (ดูแลเส้นผม)": ["ไม่ระบุ", "Hair", "Hair PLUS"],
+  "Others": ["ไม่ระบุ"]
+};
+
 const INITIAL_DATA = [
-  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Aoikumo: Medical Aesthetics", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569" },
-  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aoikumo: Aesthetics", stage: "Demo แล้ว", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569" },
-  { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "kumoDoc: GP", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569" },
-  { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "kumoDoc: Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569" },
-  { id: 5, name: "คลินิก C", type: "Aesthetic (ความงาม)", package: "Aoikumo: Grow", stage: "Follow Up", value: 36000, prob: 40, priority: "กลาง", month: "พฤษภาคม 2569" },
+  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Medical Aesthetics", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569" },
+  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aesthetics", stage: "Demo แล้ว", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569" },
+  { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "GP", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569" },
+  { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569" },
+  { id: 5, name: "คลินิก C", type: "Aesthetic (ความงาม)", package: "Grow", stage: "Follow Up", value: 36000, prob: 40, priority: "กลาง", month: "พฤษภาคม 2569" },
 ];
 
 const STAGES = ["Prospect","Interested","Follow Up","นัด Demo","Demo แล้ว","รอเซ็นสัญญา","ปิดดีลแล้ว","ไม่สนใจ"];
@@ -100,43 +107,51 @@ function KPICard({ label, value, sub, color, icon }) {
 
 function Modal({ onAdd, onClose, currentPeriod }) {
   const [form, setForm] = useState({ name:"", type:"Aesthetic (ความงาม)", package:"ไม่ระบุ", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod });
-  const set = (k,v) => setForm(f => ({...f,[k]:v}));
+  
+  const handleChange = (k, v) => {
+    setForm(f => {
+      const newForm = { ...f, [k]: v };
+      if (k === 'type') newForm.package = "ไม่ระบุ";
+      return newForm;
+    });
+  };
+
   const inputStyle = { background:"#1e293b", border:"1px solid #334155", borderRadius:8, padding:"8px 12px", color:"#f8fafc", fontSize:14, outline:"none", width:"100%" };
 
-  return React.createElement("div", { style:{ position:"fixed", inset:0, background:"#000000cc", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }},
-    React.createElement("div", { style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:20, padding:32, width:440, display:"flex", flexDirection:"column", gap:14 }},
+  return React.createElement("div", { style:{ position:"fixed", inset:0, background:"#000000cc", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding: "20px" }},
+    React.createElement("div", { className: "modal-scroll", style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:20, padding:32, width:440, maxHeight: "90vh", overflowY: "auto", display:"flex", flexDirection:"column", gap:14 }},
       React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"center" }},
         React.createElement("div", { style:{ color:"#f8fafc", fontWeight:700, fontSize:18, fontFamily:"'Space Grotesk',sans-serif" }}, "➕ เพิ่มคลินิกใหม่"),
         React.createElement("button", { onClick:onClose, style:{ background:"none", border:"none", color:"#64748b", fontSize:20, cursor:"pointer" }}, "✕")
       ),
       ...[
         { label:"ชื่อคลินิก", key:"name", type:"text" },
-        { label:"มูลค่า (บาท/ปี)", key:"value", type:"number" },
-        { label:"โอกาสปิด (%)", key:"prob", type:"number" },
+        { label:"มูลค่าที่เสนอ (บาท/ปี)", key:"value", type:"number" },
+        { label:"โอกาสปิดดีล (%)", key:"prob", type:"number" },
       ].map(({ label, key, type }) =>
         React.createElement("div", { key, style:{ display:"flex", flexDirection:"column", gap:6 }},
           React.createElement("label", { style:{ color:"#94a3b8", fontSize:12 }}, label),
-          React.createElement("input", { type, value:form[key], onChange:e=>set(key,e.target.value), style:inputStyle })
+          React.createElement("input", { type, value:form[key], onChange:e=>handleChange(key,e.target.value), style:inputStyle })
         )
       ),
       ...[
         { label:"ประจำเดือน", key:"month", opts: PERIODS },
         { label:"ประเภทคลินิก", key:"type", opts:TYPES },
-        { label:"แพ็กเกจโปรแกรมที่เสนอ", key:"package", opts:PACKAGES },
-        { label:"Stage", key:"stage", opts:STAGES },
-        { label:"Priority", key:"priority", opts:["สูง","กลาง","ต่ำ"] },
+        { label:"แพ็กเกจโปรแกรมที่สนใจ", key:"package", opts: PACKAGE_MAP[form.type] || ["ไม่ระบุ"] },
+        { label:"Stage ปัจจุบัน", key:"stage", opts:STAGES },
+        { label:"Priority ความสำคัญ", key:"priority", opts:["สูง","กลาง","ต่ำ"] },
       ].map(({ label, key, opts }) =>
         React.createElement("div", { key, style:{ display:"flex", flexDirection:"column", gap:6 }},
           React.createElement("label", { style:{ color:"#94a3b8", fontSize:12 }}, label),
-          React.createElement("select", { value:form[key], onChange:e=>set(key,e.target.value), style:inputStyle },
+          React.createElement("select", { value:form[key], onChange:e=>handleChange(key,e.target.value), style:inputStyle },
             ...opts.map(o => React.createElement("option", { key:o }, o))
           )
         )
       ),
       React.createElement("button", {
         onClick:() => { onAdd({...form, id:Date.now(), value:Number(form.value)||0, prob:Number(form.prob)||0}); onClose(); },
-        style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:10, padding:12, color:"#fff", fontWeight:700, fontSize:15, cursor:"pointer", marginTop:4 }
-      }, "บันทึก")
+        style:{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", border:"none", borderRadius:10, padding:12, color:"#fff", fontWeight:700, fontSize:15, cursor:"pointer", marginTop:4, flexShrink: 0 }
+      }, "บันทึกข้อมูล")
     )
   );
 }
@@ -148,7 +163,6 @@ function App() {
       if(s) {
         let parsed = JSON.parse(s);
         return parsed.map(item => {
-          // แปลงประเภทคลินิกเดิมให้เป็นชื่อใหม่ จะได้สีในกราฟไม่เพี้ยน
           let newType = item.type;
           if(item.type === "Aesthetic") newType = "Aesthetic (ความงาม)";
           if(item.type === "General Clinic") newType = "General Clinic (คลินิกทั่วไป)";
@@ -157,11 +171,14 @@ function App() {
           if(item.type === "Vet") newType = "Vet (รักษาสัตว์)";
           if(item.type === "Hair") newType = "Hair (ดูแลเส้นผม)";
 
+          let newPackage = item.package || "ไม่ระบุ";
+          if(newPackage.includes(": ")) newPackage = newPackage.split(": ")[1];
+
           return {
             ...item,
             type: newType,
             month: item.month || "พฤษภาคม 2569",
-            package: item.package || "ไม่ระบุ"
+            package: newPackage
           };
         });
       }
@@ -197,7 +214,7 @@ function App() {
 
   const addClinic = (c) => setData(p => [...p, c]);
   const updateStage = (id, stage) => setData(p => p.map(d => d.id===id ? {...d,stage} : d));
-  const deleteClinic = (id) => { if(confirm("ลบคลินิกนี้?")) setData(p => p.filter(d=>d.id!==id)); };
+  const deleteClinic = (id) => { if(confirm("ลบคลินิกนี้ออกจากระบบ?")) setData(p => p.filter(d=>d.id!==id)); };
 
   const selectStyle = { background:"#1e293b", border:"1px solid #334155", borderRadius:8, padding:"6px 10px", color:"#94a3b8", fontSize:12, outline:"none" };
 
