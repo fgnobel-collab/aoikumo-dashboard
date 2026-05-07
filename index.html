@@ -61,22 +61,22 @@ const PACKAGE_MAP = {
   "Others": ["ไม่ระบุ"]
 };
 
-const INITIAL_DATA = [
-  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Medical Aesthetics", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569" },
-  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aesthetics", stage: "Demo แล้ว", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569" },
-  { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "GP", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569" },
-  { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569" },
-  { id: 5, name: "คลินิก C", type: "Aesthetic (ความงาม)", package: "Grow", stage: "Follow Up", value: 36000, prob: 40, priority: "กลาง", month: "พฤษภาคม 2569" },
-  { id: 6, name: "คลินิก D (ลีดเก่า)", type: "Dental (ทำฟัน)", package: "Dental", stage: "นัด Demo", value: 25000, prob: 50, priority: "กลาง", month: "เมษายน 2569" }
-];
-
-const STAGES = ["Prospect","Interested","Follow Up","นัด Demo","Demo แล้ว","รอเซ็นสัญญา","ปิดดีลแล้ว","ไม่สนใจ"];
+// อัปเดต Stage ให้มี "อยู่ระหว่างทดลอง Trial"
+const STAGES = ["Prospect","Interested","Follow Up","นัด Demo","Demo แล้ว","อยู่ระหว่างทดลอง Trial","รอเซ็นสัญญา","ปิดดีลแล้ว","ไม่สนใจ"];
 
 const STAGE_COLORS = {
   "Prospect":"#94a3b8","Interested":"#60a5fa","Follow Up":"#f59e0b",
-  "นัด Demo":"#a78bfa","Demo แล้ว":"#34d399","รอเซ็นสัญญา":"#f97316",
-  "ปิดดีลแล้ว":"#10b981","ไม่สนใจ":"#ef4444"
+  "นัด Demo":"#a78bfa","Demo แล้ว":"#34d399","อยู่ระหว่างทดลอง Trial":"#0ea5e9", // สีฟ้าใหม่สำหรับ Trial
+  "รอเซ็นสัญญา":"#f97316","ปิดดีลแล้ว":"#10b981","ไม่สนใจ":"#ef4444"
 };
+
+const INITIAL_DATA = [
+  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Medical Aesthetics", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569" },
+  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aesthetics", stage: "อยู่ระหว่างทดลอง Trial", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569" },
+  { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "GP", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569" },
+  { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569" },
+  { id: 5, name: "คลินิก C", type: "Aesthetic (ความงาม)", package: "Grow", stage: "Follow Up", value: 36000, prob: 40, priority: "กลาง", month: "พฤษภาคม 2569" }
+];
 
 const TYPE_COLORS = {
   "Aesthetic (ความงาม)":"#e879f9",
@@ -111,7 +111,6 @@ function KPICard({ label, value, sub, color, icon }) {
 }
 
 function Modal({ initialData, onSave, onClose, currentPeriod }) {
-  // รับข้อมูล initialData มา ถ้ามีแปลว่ากำลัง "แก้ไข" ถ้าไม่มีแปลว่า "เพิ่มใหม่"
   const [form, setForm] = useState(initialData || { name:"", type:"Aesthetic (ความงาม)", package:"ไม่ระบุ", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod });
   
   const handleChange = (k, v) => {
@@ -181,9 +180,14 @@ function App() {
           let newPackage = item.package || "ไม่ระบุ";
           if(newPackage.includes(": ")) newPackage = newPackage.split(": ")[1];
 
+          // อัปเดตข้อมูลเก่าให้รองรับ Stage Trial ถ้ามีปัญหา
+          let newStage = item.stage;
+          if (!STAGES.includes(newStage)) newStage = "Prospect";
+
           return {
             ...item,
             type: newType,
+            stage: newStage,
             month: item.month || "พฤษภาคม 2569",
             package: newPackage
           };
@@ -195,7 +199,7 @@ function App() {
   
   const [selectedPeriod, setSelectedPeriod] = useState("พฤษภาคม 2569");
   const [showModal, setShowModal] = useState(false);
-  const [editingData, setEditingData] = useState(null); // เก็บข้อมูลคลินิกที่กำลังจะแก้
+  const [editingData, setEditingData] = useState(null); 
   const [filterType, setFilterType] = useState("ทั้งหมด");
   const [filterStage, setFilterStage] = useState("ทั้งหมด");
   const [saved, setSaved] = useState(false);
@@ -222,15 +226,18 @@ function App() {
   const conversionRate = activeData.length > 0 ? Math.round((activeData.filter(d=>d.stage==="ปิดดีลแล้ว").length / activeData.length)*100) : 0;
 
   const typeData = TYPES.map(t => ({ name:t, value:activeData.filter(d=>d.type===t).length })).filter(d=>d.value>0);
-  const stageData = STAGES.map(s => ({ name:s, value:activeData.filter(d=>d.stage===s).length, fill:STAGE_COLORS[s] }));
+  
+  // ข้อมูลกราฟแท่งแบบใหม่: รวมมูลค่า(บาท) ตาม Stage
+  const stageValueData = STAGES.map(s => ({ 
+    name: s, 
+    value: activeData.filter(d=>d.stage===s).reduce((sum, item) => sum + item.value, 0), 
+    fill: STAGE_COLORS[s] 
+  }));
 
-  // รวมฟังก์ชันเพิ่มและแก้ไขไว้ด้วยกัน
   const handleSaveClinic = (clinicData) => {
     if (editingData) {
-      // โหมดแก้ไข
       setData(p => p.map(d => d.id === clinicData.id ? clinicData : d));
     } else {
-      // โหมดเพิ่มใหม่
       setData(p => [...p, clinicData]);
     }
     setShowModal(false);
@@ -307,24 +314,27 @@ function App() {
         )
       ),
 
-      // Bar
+      // Bar (แบบใหม่ ดูเป็นมูลค่าเงิน)
       React.createElement("div", { style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:16, padding:20 }},
-        React.createElement("div", { style:{ fontWeight:700, fontSize:14, marginBottom:16, color:"#e2e8f0" }}, "📊 จำนวนตาม Stage"),
+        React.createElement("div", { style:{ fontWeight:700, fontSize:14, marginBottom:16, color:"#e2e8f0" }}, "📊 มูลค่าดีลตาม Stage (บาท)"),
         React.createElement(ResponsiveContainer, { width:"100%", height:210 },
-          React.createElement(BarChart, { data:stageData, layout:"vertical", margin:{ left:10, right:20 }},
-            React.createElement(XAxis, { type:"number", tick:{ fill:"#475569", fontSize:10 }}),
+          React.createElement(BarChart, { data:stageValueData, layout:"vertical", margin:{ left:10, right:20 }},
+            React.createElement(XAxis, { type:"number", tickFormatter: (val) => `฿${val/1000}k`, tick:{ fill:"#475569", fontSize:10 }}),
             React.createElement(YAxis, { type:"category", dataKey:"name", tick:{ fill:"#94a3b8", fontSize:10 }, width:90 }),
-            React.createElement(Tooltip, { contentStyle:{ background:"#1e293b", border:"1px solid #334155", borderRadius:8, color:"#f8fafc", fontSize:12 }}),
+            React.createElement(Tooltip, { 
+              formatter: (value) => [`฿${value.toLocaleString()}`, "มูลค่ารวม"],
+              contentStyle:{ background:"#1e293b", border:"1px solid #334155", borderRadius:8, color:"#f8fafc", fontSize:12 } 
+            }),
             React.createElement(Bar, { dataKey:"value", radius:[0,6,6,0] },
-              ...stageData.map(entry => React.createElement(Cell, { key:entry.name, fill:entry.fill }))
+              ...stageValueData.map(entry => React.createElement(Cell, { key:entry.name, fill:entry.fill }))
             )
           )
         )
       ),
 
-      // Funnel
+      // Funnel (นับเป็นจำนวน)
       React.createElement("div", { style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:16, padding:20 }},
-        React.createElement("div", { style:{ fontWeight:700, fontSize:14, marginBottom:16, color:"#e2e8f0" }}, "🔽 Sales Funnel"),
+        React.createElement("div", { style:{ fontWeight:700, fontSize:14, marginBottom:16, color:"#e2e8f0" }}, "🔽 จำนวนคลินิกตาม Stage"),
         React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:8 }},
           ...STAGES.map(s => {
             const count = activeData.filter(d=>d.stage===s).length;
