@@ -31,26 +31,51 @@ const PERIODS = [
   "กันยายน 2569", "ตุลาคม 2569", "พฤศจิกายน 2569", "ธันวาคม 2569"
 ];
 
+const PACKAGES = [
+  "ไม่ระบุ",
+  "Aoikumo: Grow", "Aoikumo: Aesthetics", "Aoikumo: Medical Aesthetics",
+  "Hair: Hair", "Hair: Hair PLUS",
+  "kumoDoc: GP", "kumoDoc: GP +", "kumoDoc: Wellness",
+  "kumoVet: kumoVet", "kumoVet: kumoVet GROOM", "kumoVet: kumoVet PLUS",
+  "kumoDent: Dental Lite", "kumoDent: Dental", "kumoDent: Dental +"
+];
+
+const TYPES = [
+  "Aesthetic (ความงาม)",
+  "General Clinic (คลินิกทั่วไป)",
+  "Wellness / กายภาพ",
+  "Dental (ทำฟัน)",
+  "Vet (รักษาสัตว์)",
+  "Hair (ดูแลเส้นผม)",
+  "Others"
+];
+
 const INITIAL_DATA = [
-  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569" },
-  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic", stage: "Demo แล้ว", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569" },
-  { id: 3, name: "คลินิก A", type: "General Clinic", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569" },
-  { id: 4, name: "คลินิก B", type: "Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569" },
-  { id: 5, name: "คลินิก C", type: "Aesthetic", stage: "Follow Up", value: 36000, prob: 40, priority: "กลาง", month: "พฤษภาคม 2569" },
+  { id: 1, name: "คลินิกที่กำลังจะปิด", type: "Aesthetic (ความงาม)", package: "Aoikumo: Medical Aesthetics", stage: "รอเซ็นสัญญา", value: 48000, prob: 90, priority: "สูง", month: "พฤษภาคม 2569" },
+  { id: 2, name: "คลินิก Demo วันจันทร์", type: "Aesthetic (ความงาม)", package: "Aoikumo: Aesthetics", stage: "Demo แล้ว", value: 36000, prob: 60, priority: "สูง", month: "พฤษภาคม 2569" },
+  { id: 3, name: "คลินิก A", type: "General Clinic (คลินิกทั่วไป)", package: "kumoDoc: GP", stage: "Interested", value: 24000, prob: 30, priority: "กลาง", month: "พฤษภาคม 2569" },
+  { id: 4, name: "คลินิก B", type: "Wellness / กายภาพ", package: "kumoDoc: Wellness", stage: "Prospect", value: 0, prob: 10, priority: "ต่ำ", month: "พฤษภาคม 2569" },
+  { id: 5, name: "คลินิก C", type: "Aesthetic (ความงาม)", package: "Aoikumo: Grow", stage: "Follow Up", value: 36000, prob: 40, priority: "กลาง", month: "พฤษภาคม 2569" },
 ];
 
 const STAGES = ["Prospect","Interested","Follow Up","นัด Demo","Demo แล้ว","รอเซ็นสัญญา","ปิดดีลแล้ว","ไม่สนใจ"];
-const TYPES = ["Aesthetic","General Clinic","Wellness","Dental","Others"];
 
 const STAGE_COLORS = {
   "Prospect":"#94a3b8","Interested":"#60a5fa","Follow Up":"#f59e0b",
   "นัด Demo":"#a78bfa","Demo แล้ว":"#34d399","รอเซ็นสัญญา":"#f97316",
   "ปิดดีลแล้ว":"#10b981","ไม่สนใจ":"#ef4444"
 };
+
 const TYPE_COLORS = {
-  "Aesthetic":"#e879f9","General Clinic":"#38bdf8",
-  "Wellness":"#4ade80","Dental":"#fb923c","Others":"#94a3b8"
+  "Aesthetic (ความงาม)":"#e879f9",
+  "General Clinic (คลินิกทั่วไป)":"#38bdf8",
+  "Wellness / กายภาพ":"#4ade80",
+  "Dental (ทำฟัน)":"#fb923c",
+  "Vet (รักษาสัตว์)":"#facc15",
+  "Hair (ดูแลเส้นผม)":"#818cf8",
+  "Others":"#94a3b8"
 };
+
 const PRIORITY_BADGE = {
   "สูง":{ bg:"#fee2e2", text:"#dc2626" },
   "กลาง":{ bg:"#fef9c3", text:"#b45309" },
@@ -74,12 +99,12 @@ function KPICard({ label, value, sub, color, icon }) {
 }
 
 function Modal({ onAdd, onClose, currentPeriod }) {
-  const [form, setForm] = useState({ name:"", type:"Aesthetic", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod });
+  const [form, setForm] = useState({ name:"", type:"Aesthetic (ความงาม)", package:"ไม่ระบุ", stage:"Prospect", value:"", prob:0, priority:"กลาง", month: currentPeriod });
   const set = (k,v) => setForm(f => ({...f,[k]:v}));
   const inputStyle = { background:"#1e293b", border:"1px solid #334155", borderRadius:8, padding:"8px 12px", color:"#f8fafc", fontSize:14, outline:"none", width:"100%" };
 
   return React.createElement("div", { style:{ position:"fixed", inset:0, background:"#000000cc", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }},
-    React.createElement("div", { style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:20, padding:32, width:420, display:"flex", flexDirection:"column", gap:14 }},
+    React.createElement("div", { style:{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:20, padding:32, width:440, display:"flex", flexDirection:"column", gap:14 }},
       React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", alignItems:"center" }},
         React.createElement("div", { style:{ color:"#f8fafc", fontWeight:700, fontSize:18, fontFamily:"'Space Grotesk',sans-serif" }}, "➕ เพิ่มคลินิกใหม่"),
         React.createElement("button", { onClick:onClose, style:{ background:"none", border:"none", color:"#64748b", fontSize:20, cursor:"pointer" }}, "✕")
@@ -96,7 +121,8 @@ function Modal({ onAdd, onClose, currentPeriod }) {
       ),
       ...[
         { label:"ประจำเดือน", key:"month", opts: PERIODS },
-        { label:"ประเภท", key:"type", opts:TYPES },
+        { label:"ประเภทคลินิก", key:"type", opts:TYPES },
+        { label:"แพ็กเกจโปรแกรมที่เสนอ", key:"package", opts:PACKAGES },
         { label:"Stage", key:"stage", opts:STAGES },
         { label:"Priority", key:"priority", opts:["สูง","กลาง","ต่ำ"] },
       ].map(({ label, key, opts }) =>
@@ -121,8 +147,23 @@ function App() {
       const s = localStorage.getItem("pipeline"); 
       if(s) {
         let parsed = JSON.parse(s);
-        // เติมเดือนให้ข้อมูลเก่าที่ยังไม่มีเดือน เพื่อป้องกันข้อมูลหาย
-        return parsed.map(item => item.month ? item : { ...item, month: "พฤษภาคม 2569" });
+        return parsed.map(item => {
+          // แปลงประเภทคลินิกเดิมให้เป็นชื่อใหม่ จะได้สีในกราฟไม่เพี้ยน
+          let newType = item.type;
+          if(item.type === "Aesthetic") newType = "Aesthetic (ความงาม)";
+          if(item.type === "General Clinic") newType = "General Clinic (คลินิกทั่วไป)";
+          if(item.type === "Wellness") newType = "Wellness / กายภาพ";
+          if(item.type === "Dental") newType = "Dental (ทำฟัน)";
+          if(item.type === "Vet") newType = "Vet (รักษาสัตว์)";
+          if(item.type === "Hair") newType = "Hair (ดูแลเส้นผม)";
+
+          return {
+            ...item,
+            type: newType,
+            month: item.month || "พฤษภาคม 2569",
+            package: item.package || "ไม่ระบุ"
+          };
+        });
       }
       return INITIAL_DATA; 
     } catch { return INITIAL_DATA; }
@@ -140,7 +181,6 @@ function App() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  // ดึงข้อมูลเฉพาะเดือนที่เลือกมาคำนวณ
   const activeData = data.filter(d => d.month === selectedPeriod);
 
   const filtered = activeData.filter(d =>
@@ -277,7 +317,7 @@ function App() {
         React.createElement("table", null,
           React.createElement("thead", null,
             React.createElement("tr", { style:{ borderBottom:"1px solid #1e293b" }},
-              ...["ชื่อคลินิก","ประเภท","Stage","มูลค่า (บาท/ปี)","โอกาส %","Priority","อัปเดต Stage",""].map(h =>
+              ...["ชื่อคลินิก","ประเภท","แพ็กเกจ","Stage","มูลค่า (บาท/ปี)","โอกาส %","Priority","อัปเดต Stage",""].map(h =>
                 React.createElement("th", { key:h, style:{ padding:"8px 12px", textAlign:"left", color:"#475569", fontWeight:600, fontSize:11 }}, h)
               )
             )
@@ -290,6 +330,7 @@ function App() {
                 React.createElement("td", { style:{ padding:"10px 12px" }},
                   React.createElement("span", { style:{ background:`${TYPE_COLORS[d.type]}22`, color:TYPE_COLORS[d.type], padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.type)
                 ),
+                React.createElement("td", { style:{ padding:"10px 12px", color:"#94a3b8", fontSize: 11 }}, d.package || "ไม่ระบุ"),
                 React.createElement("td", { style:{ padding:"10px 12px" }},
                   React.createElement("span", { style:{ background:`${STAGE_COLORS[d.stage]}22`, color:STAGE_COLORS[d.stage], padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:600 }}, d.stage)
                 ),
@@ -316,7 +357,7 @@ function App() {
               );
             }),
             filtered.length===0 && React.createElement("tr", null,
-              React.createElement("td", { colSpan:8, style:{ textAlign:"center", padding:32, color:"#475569" }}, "ไม่พบข้อมูลของเดือนนี้")
+              React.createElement("td", { colSpan:9, style:{ textAlign:"center", padding:32, color:"#475569" }}, "ไม่พบข้อมูลของเดือนนี้")
             )
           )
         )
